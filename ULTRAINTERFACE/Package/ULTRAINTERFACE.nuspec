@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>ULTRAINTERFACE</id>
+    <version>1.0.0</version>
+    <authors>Bobby Shmurner</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <description>A UI Library for ULTRAKILL</description>
+    <releaseNotes>Inital Release</releaseNotes>
+    <copyright>Copyright ©2022 Bobby Shmurner</copyright>
+    <tags>ui utility ultrakill</tags>
+    
+    <dependencies>
+      <group targetFramework=".NETFramework4.6">
+        <dependency id="BepInEx.Core" version="5.*" />
+        <dependency id="UnityEngine.Modules" version="2019.4.16" />
+        <dependency id="IgnoresAccessChecksToGenerator" version="0.4.0" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>
