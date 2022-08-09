@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>ULTRAINTERFACE</id>
-    <version>1.0.0</version>
+    <version>0.0.1</version>
     <authors>Bobby Shmurner</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>

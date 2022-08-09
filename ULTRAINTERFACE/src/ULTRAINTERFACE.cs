@@ -21,6 +21,7 @@ namespace ULTRAINTERFACE {
 		static GameObject ScrollRectPrefab;
 		static GameObject ScrollbarPrefab;
 		static GameObject ButtonPrefab;
+		static GameObject TogglePrefab;
 		static GameObject TextPrefab;
 
 		static bool IsUISetup = false;
@@ -37,6 +38,44 @@ namespace ULTRAINTERFACE {
 
 				action(SceneManager.GetActiveScene());
 			}
+		}
+
+		public static RectTransform CreateHorizontalLayoutGroup(Transform parent, float width = 500, float height = 20, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter) {
+			HorizontalLayoutGroup layout = new GameObject("Horizontal Layout Group").AddComponent<HorizontalLayoutGroup>();
+
+			RectTransform layoutRect = layout.GetComponent<RectTransform>();
+			layoutRect.sizeDelta = new Vector2(width, height);
+			layoutRect.SetParent(parent, false);
+
+			layout.childAlignment = childAlignment;
+			layout.childForceExpandHeight = false;
+			layout.childForceExpandWidth = false;
+			layout.childControlHeight = false;
+			layout.spacing = spacing;
+
+			ContentSizeFitter sizeFitter = layout.gameObject.AddComponent<ContentSizeFitter>();
+			sizeFitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
+
+			return layoutRect;
+		}
+
+		public static RectTransform CreateVerticalLayoutGroup(Transform parent, float width = 20, float height = 500, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter) {
+			VerticalLayoutGroup layout = new GameObject("Vertical Layout Group").AddComponent<VerticalLayoutGroup>();
+
+			RectTransform layoutRect = layout.GetComponent<RectTransform>();
+			layoutRect.sizeDelta = new Vector2(width, height);
+			layoutRect.SetParent(parent, false);
+
+			layout.childAlignment = childAlignment;
+			layout.childForceExpandHeight = false;
+			layout.childForceExpandWidth = false;
+			layout.childControlWidth = false;
+			layout.spacing = spacing;
+
+			ContentSizeFitter sizeFitter = layout.gameObject.AddComponent<ContentSizeFitter>();
+			sizeFitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
+
+			return layoutRect;
 		}
 
 		public static CustomScrollView CreateScrollView(Transform parent, float width = 620, float height = 520, int spacing = 20, TextAnchor childAlignment = TextAnchor.UpperCenter, string name = "Custom Scroll View") {
@@ -140,6 +179,57 @@ namespace ULTRAINTERFACE {
 			return button;
 		}
 
+		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float width = 170, float height = 20, float spacing = 75, int labelSize = 14, bool forceCaps = true) {
+			CustomToggle toggle = CreateToggle(parent, label, width, height, spacing, labelSize, forceCaps);
+			toggle.Toggle.onValueChanged.AddListener(onValueChanged);
+
+			return toggle;
+		}
+
+		public static CustomToggle CreateToggle(Transform parent, string label, float width = 170, float height = 20, float spacing = 75, int labelSize = 14, bool forceCaps = true) {
+			if (!Init()) return null;
+			if (forceCaps) label = label.ToUpper();
+
+			RectTransform containerRect = new GameObject(CultureInfo.InvariantCulture.TextInfo.ToTitleCase($"{label.ToLower()} Toggle")).AddComponent<RectTransform>(); 
+			containerRect.sizeDelta = new Vector2(width, height);
+			containerRect.pivot = new Vector2(0.5f, 0.5f);
+			containerRect.SetParent(parent, false);
+
+			GameObject toggleGO = GameObject.Instantiate(TogglePrefab, containerRect);
+			toggleGO.name = "Toggle";
+
+			RectTransform toggleRect = toggleGO.GetComponent<RectTransform>();
+			toggleRect.anchoredPosition = new Vector2(spacing, 0);
+			toggleRect.anchorMin = new Vector2(0.5f, 0.5f);
+			toggleRect.anchorMax = new Vector2(0.5f, 0.5f);
+			toggleRect.pivot = new Vector2(0.5f, 0.5f);
+
+			Text labelText = CreateText(containerRect, label, labelSize, 160, 30, TextAnchor.MiddleLeft);
+
+			RectTransform labelRect = labelText.rectTransform;
+			labelRect.anchoredPosition = new Vector2(0, 0);
+			labelRect.anchorMin = new Vector2(0, 0.5f);
+			labelRect.anchorMax = new Vector2(0, 0.5f);
+			labelRect.pivot = new Vector2(0, 0.5f);
+			labelRect.SetAsFirstSibling();
+			
+			Toggle toggle = toggleGO.GetComponent<Toggle>();
+			toggle.onValueChanged.RemoveAllListeners();
+
+			// Disable all the persisten listeners
+			for (int i = 0; i < toggle.onValueChanged.GetPersistentEventCount(); i++) {
+				toggle.onValueChanged.SetPersistentListenerState(i, UnityEventCallState.Off);
+			}
+
+			SetupLayoutElement(containerRect.gameObject, width, height);
+			Options.SetupBackSelectOverride(toggleGO);
+
+			CustomToggle customToggle = containerRect.gameObject.AddComponent<CustomToggle>();
+			customToggle.Init(labelText, toggle);
+
+			return customToggle;
+		}
+
 		public static Text CreateText(Transform parent, string displayText = "New Text", int fontSize = 24, float width = 600, float height = 30, TextAnchor anchor = TextAnchor.MiddleCenter, bool forceCaps = true) {
 			if (!Init()) return null;
 			if (forceCaps) displayText = displayText.ToUpper();
@@ -230,6 +320,10 @@ namespace ULTRAINTERFACE {
 			if (possibleButtonPrefab != null) ButtonPrefab = possibleButtonPrefab.gameObject;
 			else ButtonPrefab = Options.OptionsMenu.Find("Options Scroll View").GetChild(0).GetChild(0).Find("Gameplay").gameObject;
 
+			Options.GameplayOptionsContent = Options.OptionsMenu.Find("Gameplay Options").GetChild(1).GetChild(0);
+
+			TogglePrefab = Options.GameplayOptionsContent.GetComponentInChildren<Toggle>().gameObject;
+
 			Log.LogInfo($"Initalised UI");
 			return true;
 		}
@@ -249,6 +343,21 @@ namespace ULTRAINTERFACE {
 			this.Content = content;
 			this.ScrollRect = scrollRect;
 			this.Scrollbar = scrollbar;
+		}
+	}
+
+	public class CustomToggle : UIComponent {
+		public Text Label { get; private set; }
+		public Toggle Toggle { get; private set; }
+
+		internal void Init(Text label, Toggle toggle) {
+			if (Label != null) {
+				UI.Log.LogError($"Toggle \"{gameObject.name}\" already initalised, returning...");
+				return;
+			}
+
+			this.Label = label;
+			this.Toggle = toggle;
 		}
 	}
 

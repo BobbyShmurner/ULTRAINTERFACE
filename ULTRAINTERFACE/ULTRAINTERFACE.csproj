@@ -28,4 +28,8 @@
     <Reference Include="Assembly-CSharp"/>
     <Reference Include="UnityEngine.UI"/>
   </ItemGroup>
+
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Package/contentFiles/**/*.*</DefaultItemExcludes>
+  </PropertyGroup>
 </Project>

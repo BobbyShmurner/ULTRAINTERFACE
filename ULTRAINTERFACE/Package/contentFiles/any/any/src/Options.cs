@@ -11,9 +11,10 @@ using System.Reflection;
 namespace ULTRAINTERFACE {
 	public static class Options {
 		public static CustomScrollView OptionsScroll { get; private set; }
-		public static RectTransform OptionsMenu { get; internal set; } // It's just easier to have SetupUI grab the menu
 
-		static Transform GameplayOptionsContent;
+		// It's just easier to have SetupUI grab these
+		public static RectTransform OptionsMenu { get; internal set; } 
+		public static Transform GameplayOptionsContent { get; internal set; } 
 
 		static GameObject OptionsPanelPrefab;
 		static GameObject CheckboxOptionsPrefab;
@@ -27,7 +28,7 @@ namespace ULTRAINTERFACE {
 			});
 		}
 
-		public static RectTransform CreateOptionsPanel(Transform parent) {
+		public static RectTransform CreateOptionsPanel(Transform parent, TextAnchor childAlignment = TextAnchor.MiddleLeft, float spacing = 20) {
 			RectTransform panel = GameObject.Instantiate(OptionsPanelPrefab, parent).GetComponent<RectTransform>();
 			panel.gameObject.name = "Options Panel";
 			panel.gameObject.layer = 5;
@@ -38,11 +39,11 @@ namespace ULTRAINTERFACE {
 
 			VerticalLayoutGroup layoutGroup = panel.gameObject.AddComponent<VerticalLayoutGroup>();
 			layoutGroup.padding = new RectOffset(40, 40, 20, 20);
-			layoutGroup.childAlignment = TextAnchor.UpperCenter;
+			layoutGroup.childAlignment = childAlignment;
 			layoutGroup.childForceExpandHeight = false;
 			layoutGroup.childForceExpandWidth = false;
 			layoutGroup.childControlWidth = false;
-			layoutGroup.spacing = 20;
+			layoutGroup.spacing = spacing;
 
 			ContentSizeFitter fitter = panel.gameObject.AddComponent<ContentSizeFitter>();
 			fitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
@@ -56,7 +57,9 @@ namespace ULTRAINTERFACE {
 
 			OptionsMenu menu = menus[0];
 
-			BackSelectOverride backSelectOverride = gameObject.AddComponent<BackSelectOverride>();
+			BackSelectOverride backSelectOverride = gameObject.GetComponent<BackSelectOverride>();
+			if (backSelectOverride == null) backSelectOverride = gameObject.AddComponent<BackSelectOverride>();
+
 			backSelectOverride.Selectable = menu.OptionsButton;
 		}
 
@@ -139,10 +142,7 @@ namespace ULTRAINTERFACE {
 			});
 
 			optionsMenu.FirstShown.Add((menu) => {
-				foreach (LayoutGroup layout in menu.GetComponentsInChildren<LayoutGroup>()) {
-					LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)layout.transform);
-					LayoutRebuilder.MarkLayoutForRebuild((RectTransform)layout.transform);
-				}
+				menu.Rebuild();
 
 				foreach (ScrollRect scrollRect in menu.GetComponentsInChildren<ScrollRect>()) {
 					scrollRect.ScrollToTop();
@@ -239,7 +239,9 @@ namespace ULTRAINTERFACE {
 			}
 
 			GameplayOptionsContent = OptionsMenu.Find("Gameplay Options").GetChild(1).GetChild(0);
+
 			OptionsPanelPrefab = GameplayOptionsContent.GetChild(0).gameObject;
+			CheckboxOptionsPrefab = GameplayOptionsContent.GetComponentInChildren<Toggle>().gameObject;
 
 			return true;
 		}
@@ -265,8 +267,17 @@ namespace ULTRAINTERFACE {
 		public bool IsInitalised { get; private set; } = false;
 		public bool HasBeenShown { get; private set; } = false;
 
-		public RectTransform AddOptionsPanel() {
-			return Options.CreateOptionsPanel(Content);
+		public RectTransform AddOptionsPanel(TextAnchor anchor = TextAnchor.MiddleLeft) {
+			return Options.CreateOptionsPanel(Content, anchor);
+		}
+
+		public void Rebuild() {
+			foreach (LayoutGroup layout in this.GetComponentsInChildren<LayoutGroup>()) {
+				LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)layout.transform);
+				LayoutRebuilder.MarkLayoutForRebuild((RectTransform)layout.transform);
+			}
+
+			UpdateNavigation();
 		}
 
 		internal void Init(CustomScrollView scrollView, Button optionsButton, Text title) {
@@ -293,7 +304,7 @@ namespace ULTRAINTERFACE {
 		}
 
 		public void UpdateNavigation() {
-			Selectable[] selectables = ScrollView.Content.GetComponentsInChildren<Button>();
+			Selectable[] selectables = ScrollView.Content.GetComponentsInChildren<Selectable>(false);
 
 			for (int i = 0; i < selectables.Length; i++) {
 				Selectable selectable = selectables[i];
