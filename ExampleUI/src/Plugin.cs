@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
+using BepInEx.Configuration;
 
 using HarmonyLib;
 
@@ -21,6 +22,9 @@ namespace ExampleUI
         internal static Harmony harmony;
 
         internal static AudioClip GabrielGaming;
+
+        internal static ConfigEntry<bool> WideModeConfig;
+        internal static ConfigEntry<int> TotalMenuOpenCount;
         
         private void Awake()
         {
@@ -42,10 +46,14 @@ namespace ExampleUI
 
             Plugin.Log.LogInfo("Loaded Assets from Asset Bundle");
 
+            WideModeConfig = Config.Bind("General", "WideMode", false, "Whether or not to enbale \"Wide Mode\"");
+            TotalMenuOpenCount = Config.Bind("General.Stats", "TotalMenuOpenCount", 0, "The total amount of times the \"Secrets\" settings menu has been shown");
+
+            Plugin.Log.LogInfo("Loaded Config");
+
             Plugin.Log.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
 
-            bool hasBeenWide = false;
-
+            int openCountSinceGameStart = 0;
             Options.CreateOptionsMenu("Super cool settings", (menu) => {
                 var gabrielPanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
                 
@@ -62,19 +70,8 @@ namespace ExampleUI
                 });
 
                 var widePanel = menu.AddOptionsPanel();
-                CustomToggle wideToggle = null;
 
-                UI.CreateButton(widePanel, "wide boi", () => {
-                    foreach (Camera cam in Camera.allCameras) {
-                        cam.aspect = 0.5f;
-                    }
-                    
-                    wideToggle.Toggle.isOn = true;
-                    hasBeenWide = true;
-                    MonoSingleton<OptionsManager>.Instance.UnPause();
-                }, 520, 30);
-
-                wideToggle = UI.CreateToggle(widePanel, "wide boi", (enabled) => {
+                CustomToggle wideToggle = UI.CreateToggle(widePanel, "wide boi", (enabled) => {
                     foreach (Camera cam in Camera.allCameras) {
                         if (enabled) cam.aspect = 0.5f;
                         else cam.ResetAspect();
@@ -86,13 +83,11 @@ namespace ExampleUI
                 UI.CreateText(inlinePanel, "Woah, multiple toggles on one line???");
                 var inlineTogglesGroup = UI.CreateHorizontalLayoutGroup(inlinePanel, 440, 20, 75);
 
-                UI.CreateToggle(inlineTogglesGroup, "Uno", 125, 20, 30);
-                UI.CreateToggle(inlineTogglesGroup, "Dos", 125, 20, 30);
-                UI.CreateToggle(inlineTogglesGroup, "Tres", 125, 20, 30);
+                UI.CreateToggle(inlineTogglesGroup, "Uno", 30);
+                UI.CreateToggle(inlineTogglesGroup, "Dos", 30);
+                UI.CreateToggle(inlineTogglesGroup, "Tres", 30);
 
-                var diePanel = menu.AddOptionsPanel();
-                
-                UI.CreateButton(diePanel, "Press to die ;)", () => {
+                menu.AddButton("Press to die ;)", () => {
                     MonoSingleton<OptionsManager>.Instance.UnPause();
 
                     SpawnableObjectsDatabase database = (SpawnableObjectsDatabase)typeof(SandboxSaver).GetField("objects", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(Resources.FindObjectsOfTypeAll<SandboxSaver>()[0]);
@@ -102,14 +97,23 @@ namespace ExampleUI
                     v1.InvokeNextFrame(() => v1.GetHurt(10000, false, 1, true));
 
                     GameObject.Instantiate(maurice.transform.GetChild(0).GetComponent<SpiderBody>().beamExplosion, v1.transform.position, Quaternion.identity);
-                }, 520);
+                });
+
+                menu.AddHeader("--Stats--");
+                var statsPanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
+
+                int openCountSinceLevelStart = 0;
+
+                Text statsText = UI.CreateText(statsPanel, "Stats :)", 24, 600, 140);
 
                 // Reset Gabriel Gaming Text
                 menu.OnShown.Add((menu) => {
-                    gamingText.SetText("<size=50>stfu bozo</size>\n\nim gaming");
+                    openCountSinceGameStart++;
+                    openCountSinceLevelStart++;
+                    TotalMenuOpenCount.Value++;
 
-                    wideToggle.gameObject.SetActive(hasBeenWide);
-                    menu.Rebuild();
+                    statsText.SetText($"<size=40>This menu has been shown:</size>\n\n{openCountSinceLevelStart} {(openCountSinceLevelStart == 1 ? "time" : "times")} this level\n{openCountSinceGameStart} {(openCountSinceGameStart == 1 ? "time" : "times")} since the game opened\n{TotalMenuOpenCount.Value} {(TotalMenuOpenCount.Value == 1 ? "time" : "times")} in total");
+                    gamingText.SetText("<size=50>stfu bozo</size>\n\nim gaming");
                 });
             }, "Secrets");
         }

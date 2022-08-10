@@ -73,7 +73,7 @@ namespace ULTRAINTERFACE {
 			if (buttonText == "") buttonText = title;
 
 			CustomScrollView scrollView = UI.CreateScrollView(OptionsMenu, 620, 520, 0, TextAnchor.MiddleCenter, CultureInfo.InvariantCulture.TextInfo.ToTitleCase(title.ToLower()) + " Options");
-			Button optionsButton = UI.CreateButton(OptionsScroll.Content, title, 160, 50);
+			Button optionsButton = UI.CreateButton(OptionsScroll.Content, title, 14, 160, 50);
 			GameObject.Destroy(scrollView.GetComponent<HorizontalLayoutGroup>());
 			scrollView.gameObject.AddComponent<HudOpenEffect>();
 
@@ -269,6 +269,18 @@ namespace ULTRAINTERFACE {
 
 		public RectTransform AddOptionsPanel(TextAnchor anchor = TextAnchor.MiddleLeft) {
 			return Options.CreateOptionsPanel(Content, anchor);
+		}
+
+		public Text AddHeader(string text, int size = 24, float width = 600, float height = 50, TextAnchor anchor = TextAnchor.MiddleCenter, bool forceCaps = true) {
+			return UI.CreateText(Content, text, size, width, height, anchor, forceCaps);
+		}
+
+		public Button AddButton(string text, UnityAction onClick, int fontSize = 24, float width = 600, float height = 60, bool forceCaps = true) {
+			return UI.CreateButton(Content, text, onClick, fontSize, width, height, forceCaps);
+		}
+
+		public Button AddButton(string text, int fontSize = 24, float width = 600, float height = 60, bool forceCaps = true) {
+			return UI.CreateButton(Content, text, fontSize, width, height, forceCaps);
 		}
 
 		public void Rebuild() {

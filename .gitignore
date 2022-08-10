@@ -1,4 +1,7 @@
 bin/
 obj/
-nugetSrc/
+
+contentFiles/any/any/src/
+*.nupkg
+
 build.ps1

@@ -140,14 +140,14 @@ namespace ULTRAINTERFACE {
 			layoutElement.minWidth = width;
 		}
 
-		public static Button CreateButton(Transform parent, string text, UnityAction onClick, float width = 160, float height = 50, bool forceCaps = true) {
-			Button button = CreateButton(parent, text, width, height, forceCaps);
+		public static Button CreateButton(Transform parent, string text, UnityAction onClick, int fontSize = 14, float width = 160, float height = 50, bool forceCaps = true) {
+			Button button = CreateButton(parent, text, fontSize, width, height, forceCaps);
 			button.onClick.AddListener(onClick);
 
 			return button;
 		}
 
-		public static Button CreateButton(Transform parent, string text, float width = 160, float height = 50, bool forceCaps = true) {
+		public static Button CreateButton(Transform parent, string text, int fontSize = 14, float width = 160, float height = 50, bool forceCaps = true) {
 			if (!Init()) return null;
 			if (forceCaps) text = text.ToUpper();
 
@@ -171,6 +171,7 @@ namespace ULTRAINTERFACE {
 			buttonText.horizontalOverflow = HorizontalWrapMode.Overflow;
 			buttonText.verticalOverflow = VerticalWrapMode.Overflow;
 			buttonText.gameObject.name = "Text";
+			buttonText.fontSize = fontSize;
 			buttonText.text = text;
 
 			SetupLayoutElement(buttonGO, width, height);
@@ -179,14 +180,46 @@ namespace ULTRAINTERFACE {
 			return button;
 		}
 
-		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float width = 170, float height = 20, float spacing = 75, int labelSize = 14, bool forceCaps = true) {
-			CustomToggle toggle = CreateToggle(parent, label, width, height, spacing, labelSize, forceCaps);
+		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged) {
+			return CreateToggle(parent, label, onValueChanged, 75, 14, 170, 20, true);
+		}
+
+		public static CustomToggle CreateToggle(Transform parent, string label) {
+			return CreateToggle(parent, label, 75, 14, 170, 20, true);
+		}
+
+		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float spacing) {
+			return CreateToggle(parent, label, onValueChanged, spacing, 14, 95 + spacing, 20, true);
+		}
+
+		public static CustomToggle CreateToggle(Transform parent, string label, float spacing) {
+			return CreateToggle(parent, label, spacing, 14, 95 + spacing, 20, true);
+		}
+
+		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float spacing, int labelSize) {
+			return CreateToggle(parent, label, onValueChanged, spacing, labelSize, 95 + spacing, 20, true);
+		}
+
+		public static CustomToggle CreateToggle(Transform parent, string label, float spacing, int labelSize) {
+			return CreateToggle(parent, label, spacing, labelSize, 95 + spacing, 20, true);
+		}
+
+		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float spacing, int labelSize, float width, float height) {
+			return CreateToggle(parent, label, onValueChanged, spacing, labelSize, width, height, true);
+		}
+
+		public static CustomToggle CreateToggle(Transform parent, string label, float spacing, int labelSize, float width, float height) {
+			return CreateToggle(parent, label, spacing, labelSize, width, height, true);
+		}
+
+		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float spacing, int labelSize, float width, float height, bool forceCaps) {
+			CustomToggle toggle = CreateToggle(parent, label, spacing, labelSize, width, height, forceCaps);
 			toggle.Toggle.onValueChanged.AddListener(onValueChanged);
 
 			return toggle;
 		}
 
-		public static CustomToggle CreateToggle(Transform parent, string label, float width = 170, float height = 20, float spacing = 75, int labelSize = 14, bool forceCaps = true) {
+		public static CustomToggle CreateToggle(Transform parent, string label, float spacing, int labelSize, float width, float height, bool forceCaps) {
 			if (!Init()) return null;
 			if (forceCaps) label = label.ToUpper();
 
