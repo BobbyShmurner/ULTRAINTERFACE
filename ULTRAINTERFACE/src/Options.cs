@@ -60,7 +60,7 @@ namespace ULTRAINTERFACE {
 			BackSelectOverride backSelectOverride = gameObject.GetComponent<BackSelectOverride>();
 			if (backSelectOverride == null) backSelectOverride = gameObject.AddComponent<BackSelectOverride>();
 
-			backSelectOverride.Selectable = menu.OptionsButton;
+			backSelectOverride.Selectable = menu.OptionsButton.Button;
 		}
 
 		static OptionsMenu CreateOptionsMenu_Internal(string title, string buttonText, bool forceCaps) {
@@ -73,7 +73,7 @@ namespace ULTRAINTERFACE {
 			if (buttonText == "") buttonText = title;
 
 			CustomScrollView scrollView = UI.CreateScrollView(OptionsMenu, 620, 520, 0, TextAnchor.MiddleCenter, CultureInfo.InvariantCulture.TextInfo.ToTitleCase(title.ToLower()) + " Options");
-			Button optionsButton = UI.CreateButton(OptionsScroll.Content, title, 14, 160, 50);
+			CustomButton optionsButton = UI.CreateButton(OptionsScroll.Content, title, 14, 160, 50);
 			GameObject.Destroy(scrollView.GetComponent<HorizontalLayoutGroup>());
 			scrollView.gameObject.AddComponent<HudOpenEffect>();
 
@@ -104,7 +104,7 @@ namespace ULTRAINTERFACE {
 			// Disable these options when clicked on the other buttons
 			for (int i = 0; i < OptionsScroll.Content.transform.childCount; i++) {
 				Button button = OptionsScroll.Content.transform.GetChild(i).GetComponent<Button>();
-				if (button == null || button == optionsButton) continue;
+				if (button == null || button == optionsButton.Button) continue;
 				
 				button.onClick.AddListener(() => { scrollView.gameObject.SetActive(false); });
 			}
@@ -114,7 +114,7 @@ namespace ULTRAINTERFACE {
 				Transform child = OptionsMenu.GetChild(i);
 				if (!child.name.EndsWith(" Options")) continue;
 
-				optionsButton.onClick.AddListener(() => { child.gameObject.SetActive(child == scrollView.transform); });
+				optionsButton.Button.onClick.AddListener(() => { child.gameObject.SetActive(child == scrollView.transform); });
 			}
 
 			GamepadObjectSelector scrollViewGOS = scrollView.gameObject.AddComponent<GamepadObjectSelector>();
@@ -127,14 +127,13 @@ namespace ULTRAINTERFACE {
 			onBack.AddListener(() => { scrollViewGOS.PopTop(); } );
 			typeof(BackSelectEvent).GetField("m_OnBack", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(scrollViewBSE, onBack);
 
-			optionsButton.onClick.AddListener(() => { scrollViewGOS.Activate(); });
-			optionsButton.onClick.AddListener(() => { scrollViewGOS.SetTop(); });
+			optionsButton.Button.onClick.AddListener(() => { scrollViewGOS.Activate(); });
+			optionsButton.Button.onClick.AddListener(() => { scrollViewGOS.SetTop(); });
 
-			Text optionsButtonText = optionsButton.GetComponentInChildren<Text>();
-			optionsButtonText.text = buttonText;
+			optionsButton.Text.text = buttonText;
 
 			OptionsMenu optionsMenu = scrollView.gameObject.AddComponent<OptionsMenu>();
-			optionsMenu.Init(scrollView, optionsButton, optionsButtonText);
+			optionsMenu.Init(scrollView, optionsButton, titleText);
 
 			optionsMenu.LateCreate.Add((menu) => {
 				Selectable firstSelectable = menu.ScrollView.Content.GetComponentInChildren<Selectable>();
@@ -259,7 +258,7 @@ namespace ULTRAINTERFACE {
 		public List<Action<OptionsMenu>> OnShown { get; private set; } = new List<Action<OptionsMenu>>();
 
 		public CustomScrollView ScrollView { get; private set; }
-		public Button OptionsButton { get; private set; }
+		public CustomButton OptionsButton { get; private set; }
 		public Text Title { get; private set; }
 
 		public RectTransform Content { get { return ScrollView.Content; } }
@@ -275,11 +274,11 @@ namespace ULTRAINTERFACE {
 			return UI.CreateText(Content, text, size, width, height, anchor, forceCaps);
 		}
 
-		public Button AddButton(string text, UnityAction onClick, int fontSize = 24, float width = 600, float height = 60, bool forceCaps = true) {
+		public CustomButton AddButton(string text, UnityAction onClick, int fontSize = 24, float width = 600, float height = 60, bool forceCaps = true) {
 			return UI.CreateButton(Content, text, onClick, fontSize, width, height, forceCaps);
 		}
 
-		public Button AddButton(string text, int fontSize = 24, float width = 600, float height = 60, bool forceCaps = true) {
+		public CustomButton AddButton(string text, int fontSize = 24, float width = 600, float height = 60, bool forceCaps = true) {
 			return UI.CreateButton(Content, text, fontSize, width, height, forceCaps);
 		}
 
@@ -292,7 +291,7 @@ namespace ULTRAINTERFACE {
 			UpdateNavigation();
 		}
 
-		internal void Init(CustomScrollView scrollView, Button optionsButton, Text title) {
+		internal void Init(CustomScrollView scrollView, CustomButton optionsButton, Text title) {
 			if (IsInitalised) {
 				UI.Log.LogError($"Options Menu \"{gameObject.name}\" already initalised, returning...");
 				return;
@@ -348,7 +347,7 @@ namespace ULTRAINTERFACE {
 		public void SetButtonText(string buttonText, bool forceCaps = true) {
 			if (forceCaps) buttonText = buttonText.ToUpper();
 
-			OptionsButton.GetComponentInChildren<Text>().text = buttonText;
+			OptionsButton.Text.text = buttonText;
 		}
 
 		void OnEnable() {

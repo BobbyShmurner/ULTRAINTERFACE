@@ -140,14 +140,14 @@ namespace ULTRAINTERFACE {
 			layoutElement.minWidth = width;
 		}
 
-		public static Button CreateButton(Transform parent, string text, UnityAction onClick, int fontSize = 14, float width = 160, float height = 50, bool forceCaps = true) {
-			Button button = CreateButton(parent, text, fontSize, width, height, forceCaps);
-			button.onClick.AddListener(onClick);
+		public static CustomButton CreateButton(Transform parent, string text, UnityAction onClick, int fontSize = 14, float width = 160, float height = 50, bool forceCaps = true) {
+			CustomButton button = CreateButton(parent, text, fontSize, width, height, forceCaps);
+			button.Button.onClick.AddListener(onClick);
 
 			return button;
 		}
 
-		public static Button CreateButton(Transform parent, string text, int fontSize = 14, float width = 160, float height = 50, bool forceCaps = true) {
+		public static CustomButton CreateButton(Transform parent, string text, int fontSize = 14, float width = 160, float height = 50, bool forceCaps = true) {
 			if (!Init()) return null;
 			if (forceCaps) text = text.ToUpper();
 
@@ -177,7 +177,10 @@ namespace ULTRAINTERFACE {
 			SetupLayoutElement(buttonGO, width, height);
 			Options.SetupBackSelectOverride(buttonGO);
 
-			return button;
+			CustomButton customButton = buttonGO.AddComponent<CustomButton>();
+			customButton.Init(buttonText, button);
+
+			return customButton;
 		}
 
 		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged) {
@@ -391,6 +394,21 @@ namespace ULTRAINTERFACE {
 
 			this.Label = label;
 			this.Toggle = toggle;
+		}
+	}
+
+	public class CustomButton : UIComponent {
+		public Text Text { get; private set; }
+		public Button Button { get; private set; }
+
+		internal void Init(Text text, Button button) {
+			if (Text != null) {
+				UI.Log.LogError($"Button \"{gameObject.name}\" already initalised, returning...");
+				return;
+			}
+
+			this.Text = text;
+			this.Button = button;
 		}
 	}
 
