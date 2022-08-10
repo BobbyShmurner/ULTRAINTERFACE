@@ -72,11 +72,15 @@ namespace ExampleUI
                 var widePanel = menu.AddOptionsPanel();
 
                 CustomToggle wideToggle = UI.CreateToggle(widePanel, "wide boi", (enabled) => {
+                    WideModeConfig.Value = enabled;
+
                     foreach (Camera cam in Camera.allCameras) {
                         if (enabled) cam.aspect = 0.5f;
                         else cam.ResetAspect();
                     }
                 });
+
+                wideToggle.Toggle.isOn = WideModeConfig.Value;
 
                 var inlinePanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
 
