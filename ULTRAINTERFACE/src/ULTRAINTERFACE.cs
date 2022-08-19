@@ -271,6 +271,23 @@ namespace ULTRAINTERFACE {
 			return customSlider;
 		}
 
+		public static RectTransform CreatePanel(Transform parent, TextAnchor childAlignment = TextAnchor.MiddleLeft, float spacing = 20, float transparency = 1, string name = "Custom Panel") {
+			if (!Init()) return null;
+
+			RectTransform panel = GameObject.Instantiate(UI.PanelPrefab, parent).GetComponent<RectTransform>();
+			panel.gameObject.AddComponent<UIComponent>();
+			panel.gameObject.name = name;
+
+			VerticalLayoutGroup layoutGroup = panel.GetComponent<VerticalLayoutGroup>();
+			layoutGroup.childAlignment = childAlignment;
+			layoutGroup.spacing = spacing;
+
+			Image image = panel.GetComponent<Image>();
+			image.color = new Color(0, 0, 0, transparency);
+
+			return panel;
+		}
+
 		public static void Unload() {
 			SceneManager.sceneLoaded -= OnSceneLoad;
 			OnSceneLoadActions.Clear();

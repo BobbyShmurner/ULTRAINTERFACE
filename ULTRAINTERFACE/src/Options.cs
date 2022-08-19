@@ -25,25 +25,6 @@ namespace ULTRAINTERFACE {
 			});
 		}
 
-		public static RectTransform CreateOptionsPanel(Transform parent, TextAnchor childAlignment = TextAnchor.MiddleLeft, float spacing = 20) {
-			if (!Init()) return null;
-
-			RectTransform panel = GameObject.Instantiate(UI.PanelPrefab, parent).GetComponent<RectTransform>();
-			panel.gameObject.name = "Options Panel";
-
-			panel.anchorMin = new Vector2(0, 0.5f);
-			panel.anchorMax = new Vector2(1, 0.5f);
-
-			VerticalLayoutGroup layoutGroup = panel.GetComponent<VerticalLayoutGroup>();
-			layoutGroup.childAlignment = childAlignment;
-			layoutGroup.spacing = spacing;
-
-			ContentSizeFitter sizeFitter = panel.GetComponent<ContentSizeFitter>();
-			sizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-			return panel;
-		}
-
 		public static void SetupDefaultBackSelectOverride(UIComponent uiComponent) {
 			OptionsMenu[] menus = uiComponent.GetComponentsInParent<OptionsMenu>(true);
 			if (menus.Length == 0) return;

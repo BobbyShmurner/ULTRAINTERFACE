@@ -33,8 +33,13 @@ namespace ULTRAINTERFACE {
 			}
 		}
 
-		public RectTransform AddOptionsPanel(TextAnchor anchor = TextAnchor.MiddleLeft) {
-			return Options.CreateOptionsPanel(Content, anchor);
+		public RectTransform AddOptionsPanel(TextAnchor anchor = TextAnchor.MiddleLeft, float spacing = 20, float transparency = 1, string name = "Options Panel") {
+			RectTransform panel = UI.CreatePanel(Content, anchor, spacing, transparency, name);
+
+			ContentSizeFitter sizeFitter = panel.GetComponent<ContentSizeFitter>();
+			sizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+			return panel;
 		}
 
 		public CustomText AddHeader(string text, int size = 24, float width = 600, float height = 50, TextAnchor anchor = TextAnchor.MiddleCenter, bool forceCaps = true) {
