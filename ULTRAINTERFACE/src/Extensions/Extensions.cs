@@ -1,9 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-using System;
-using System.Collections;
-
 namespace ULTRAINTERFACE {
 	public static class Extensions {
 		public static void SetText(this Text text, string newText, bool forceCaps = true) {
@@ -16,6 +13,10 @@ namespace ULTRAINTERFACE {
 			if (movementVal > 0) return;
 
 			scrollRect.content.anchoredPosition = new Vector2(scrollRect.content.anchoredPosition.x, movementVal);
+		}
+
+		public static void Rebuild(this RectTransform rect, bool updateNavigation = true) {
+			LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
 		}
 	}
 }

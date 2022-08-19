@@ -112,9 +112,7 @@ namespace ULTRAINTERFACE {
 			optionsMenu.FirstShown.Add((menu) => {
 				menu.Rebuild();
 
-				foreach (ScrollRect scrollRect in menu.GetComponentsInChildren<ScrollRect>()) {
-					scrollRect.ScrollToTop();
-				}
+				menu.ScrollToTop(true);
 			});
 
 			UpdateOptionsScrollNavigation();
@@ -232,6 +230,17 @@ namespace ULTRAINTERFACE {
 
 		float previousHeight;
 
+		public void ScrollToTop(bool includeChildren = true) {
+			if (!includeChildren) {
+				ScrollView.ScrollRect.ScrollToTop();
+				return;
+			}
+
+			foreach (ScrollRect scrollRect in GetComponentsInChildren<ScrollRect>(true)) {
+				scrollRect.ScrollToTop();
+			}
+		}
+
 		public RectTransform AddOptionsPanel(TextAnchor anchor = TextAnchor.MiddleLeft) {
 			return Options.CreateOptionsPanel(Content, anchor);
 		}
@@ -249,13 +258,10 @@ namespace ULTRAINTERFACE {
 		}
 
 		public void Rebuild() {
+			Content.Rebuild();
 			LayoutRebuilder.ForceRebuildLayoutImmediate(Content);
 
-			Content.anchoredPosition = new Vector2(Content.anchoredPosition.x, Content.anchoredPosition.y - (Content.sizeDelta.y - previousHeight) / 2);
-
-			CoroManager.InvokeBeforeRender(() => {
-				Content.anchoredPosition = new Vector2(Content.anchoredPosition.x, Content.anchoredPosition.y - (Content.sizeDelta.y - previousHeight) / 2);
-			});
+			// Content.anchoredPosition = new Vector2(Content.anchoredPosition.x, Content.anchoredPosition.y - (Content.sizeDelta.y - previousHeight) / 2);
 
 			UpdateNavigation();
 		}
