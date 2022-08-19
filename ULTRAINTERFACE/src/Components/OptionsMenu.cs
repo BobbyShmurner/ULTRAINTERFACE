@@ -57,8 +57,6 @@ namespace ULTRAINTERFACE {
 		public void Rebuild(bool updateNavigation = true) {
 			Content.Rebuild(updateNavigation);
 
-			// Content.anchoredPosition = new Vector2(Content.anchoredPosition.x, Content.anchoredPosition.y - (Content.sizeDelta.y - previousHeight) / 2);
-
 			// This is just here until the new nav system is ready
 			if (updateNavigation) UpdateNavigation();
 		}

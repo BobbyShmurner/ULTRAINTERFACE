@@ -104,10 +104,6 @@ namespace ULTRAINTERFACE {
 
 		public static CustomButton CreateButton(Transform parent, string text, UnityAction onClick, int fontSize = 14, float width = 160, float height = 50, bool forceCaps = true) {
 			CustomButton button = CreateButton(parent, text, fontSize, width, height, forceCaps);
-
-			UI.Log.LogInfo($"New Button: {button}");
-			UI.Log.LogInfo($"Button.Button: {button.Button}");
-
 			button.Button.onClick.AddListener(onClick);
 
 			return button;
@@ -355,14 +351,6 @@ namespace ULTRAINTERFACE {
 			if (IsUISetup) return true;
 
 			Camera.main.gameObject.AddComponent<CoroManager>();
-
-			OptionsMenuToManager optionsMenuToManager = GameObject.FindObjectOfType<OptionsMenuToManager>();
-			if (optionsMenuToManager == null) {
-				Log.LogError("Failed to find the OptionsMenu, will attempt to setup UI on next scene load");
-				return false;
-			}
-
-			Options.OptionsMenu = optionsMenuToManager.transform.Find("OptionsMenu").GetComponent<RectTransform>();
 
 			Log.LogInfo($"Initalised UI");
 			return true;

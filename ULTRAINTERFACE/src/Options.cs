@@ -11,14 +11,12 @@ using System.Reflection;
 namespace ULTRAINTERFACE {
 	public static class Options {
 		public static CustomScrollView OptionsScroll { get; private set; }
-
-		// It's just easier to have SetupUI grab these
-		public static RectTransform OptionsMenu { get; internal set; } 
-		public static Transform GameplayOptionsContent { get; internal set; }
+		public static RectTransform OptionsMenu { get; private set; } 
 
 		public static void CreateOptionsMenu(string title, Action<OptionsMenu> createAction, string buttonText = "", bool forceCaps = true, bool updateNavigation = true) {
 			UI.RegisterOnSceneLoad((scene) => {
 				OptionsMenu optionsMenu = CreateOptionsMenu_Internal(title, buttonText, forceCaps);
+				if (optionsMenu == null) return;
 
 				createAction(optionsMenu);
 				optionsMenu.Rebuild(updateNavigation);
@@ -147,12 +145,16 @@ namespace ULTRAINTERFACE {
 		}
 
 		internal static bool Init() {
-			UI.Log.LogInfo("Initing Options");
 			if (!UI.Init()) return false;
 			if (OptionsScroll != null) return true;
 
-			UI.Log.LogInfo($"OptionsScroll: {OptionsScroll}");
-			UI.Log.LogInfo($"OptionsMenu: {OptionsMenu}");
+			try {
+				OptionsMenuToManager optionsMenuToManager = GameObject.FindObjectOfType<OptionsMenuToManager>();
+				OptionsMenu = optionsMenuToManager.transform.Find("OptionsMenu").GetComponent<RectTransform>();	
+			} catch {
+				UI.Log.LogError("Failed to find the OptionsMenu, will attempt to setup Options UI on next scene load");
+				return false;
+			}
 
 			// If "Options Scroll View" exists then another mod has set it up already
 			Transform existingMenuTrans = OptionsMenu.Find("Options Scroll View");
@@ -181,8 +183,6 @@ namespace ULTRAINTERFACE {
 					OptionsScroll = existingMenuTrans.gameObject.AddComponent<CustomScrollView>();
 				}
 			}
-
-			GameplayOptionsContent = OptionsMenu.Find("Gameplay Options").GetChild(1).GetChild(0);
 
 			return true;
 		}
