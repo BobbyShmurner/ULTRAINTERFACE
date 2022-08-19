@@ -1,5 +1,6 @@
 {
-	"search.exclude": {
-		"**/contentFiles": true
+	"files.exclude": {
+		"**/contentFiles/": true,
+		"**/UnityProject/": true
 	}
 }
