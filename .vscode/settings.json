@@ -1,6 +1,5 @@
 {
 	"files.exclude": {
-		"**/contentFiles/": true,
 		"**/UnityProject/": true
 	}
 }
