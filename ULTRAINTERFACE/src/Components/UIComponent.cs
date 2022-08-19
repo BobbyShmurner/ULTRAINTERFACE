@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace ULTRAINTERFACE {
 	[RequireComponent(typeof(RectTransform))]
-	public class UIComponent : MonoBehaviour {
+	public class UIComponent : ModObject {
 		public bool dimensionsHaveBeenSet { get; private set; } = false;
 
 		RectTransform rectTransform;

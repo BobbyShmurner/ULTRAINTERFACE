@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace ULTRAINTERFACE {
+	// We don't inherit from ModObject because this will be attached to the Main Camera
 	public class CoroManager : MonoBehaviour {
 		public static CoroManager Instance { get; private set; } = null;
 

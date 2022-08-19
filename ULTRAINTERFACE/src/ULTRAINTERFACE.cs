@@ -278,7 +278,7 @@ namespace ULTRAINTERFACE {
 			Options.Unload();
 			HarmonyInstance.UnpatchSelf();
 
-			foreach (UIComponent ui in Resources.FindObjectsOfTypeAll<UIComponent>()) {
+			foreach (ModObject ui in Resources.FindObjectsOfTypeAll<ModObject>()) {
 				GameObject.Destroy(ui.gameObject);
 			}
 		}
