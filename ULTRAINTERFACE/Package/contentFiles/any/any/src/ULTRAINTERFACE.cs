@@ -1,5 +1,6 @@
+using HarmonyLib;
+
 using BepInEx.Logging;
-using BepInEx.Configuration;
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,8 +8,8 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 using System;
+using System.IO;
 using System.Linq;
-using System.Collections;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Reflection;
@@ -18,11 +19,14 @@ namespace ULTRAINTERFACE {
 		public static List<Action<Scene>> OnSceneLoadActions { get; private set; } = new List<Action<Scene>>();
 		public static ManualLogSource Log { get; private set; }
 
-		static GameObject ScrollRectPrefab;
-		static GameObject ScrollbarPrefab;
-		static GameObject ButtonPrefab;
-		static GameObject TogglePrefab;
-		static GameObject TextPrefab;
+		internal static Harmony HarmonyInstance;
+
+		internal static GameObject ScrollViewPrefab;
+		internal static GameObject ButtonPrefab;
+		internal static GameObject TogglePrefab;
+		internal static GameObject SliderPrefab;
+		internal static GameObject PanelPrefab;
+		internal static GameObject TextPrefab;
 
 		static bool IsUISetup = false;
 		static bool HasInitalisedBefore = false;
@@ -42,6 +46,7 @@ namespace ULTRAINTERFACE {
 
 		public static RectTransform CreateHorizontalLayoutGroup(Transform parent, float width = 500, float height = 20, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter) {
 			HorizontalLayoutGroup layout = new GameObject("Horizontal Layout Group").AddComponent<HorizontalLayoutGroup>();
+			layout.gameObject.AddComponent<UIComponent>();
 
 			RectTransform layoutRect = layout.GetComponent<RectTransform>();
 			layoutRect.sizeDelta = new Vector2(width, height);
@@ -61,6 +66,7 @@ namespace ULTRAINTERFACE {
 
 		public static RectTransform CreateVerticalLayoutGroup(Transform parent, float width = 20, float height = 500, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter) {
 			VerticalLayoutGroup layout = new GameObject("Vertical Layout Group").AddComponent<VerticalLayoutGroup>();
+			layout.gameObject.AddComponent<UIComponent>();
 
 			RectTransform layoutRect = layout.GetComponent<RectTransform>();
 			layoutRect.sizeDelta = new Vector2(width, height);
@@ -78,70 +84,30 @@ namespace ULTRAINTERFACE {
 			return layoutRect;
 		}
 
-		public static CustomScrollView CreateScrollView(Transform parent, float width = 620, float height = 520, int spacing = 20, TextAnchor childAlignment = TextAnchor.UpperCenter, string name = "Custom Scroll View") {
+		public static CustomScrollView CreateScrollView(Transform parent, float width = 620, float height = 520, int spacing = 10, TextAnchor childAlignment = TextAnchor.UpperCenter, string name = "Custom Scroll View") {
 			if (!Init()) return null;
 
-			RectTransform scrollViewRect = new GameObject(name, new Type[]{typeof(RectTransform)}).GetComponent<RectTransform>();
-			scrollViewRect.gameObject.layer = 5;
-			scrollViewRect.sizeDelta = new Vector2(width + 35, height);
-			scrollViewRect.localPosition = Vector3.zero;
+			RectTransform scrollViewRect = GameObject.Instantiate(ScrollViewPrefab).GetComponent<RectTransform>();
 			scrollViewRect.SetParent(parent, false);
+			scrollViewRect.gameObject.name = name;
 
-			HorizontalLayoutGroup scrollViewLayoutGroup = scrollViewRect.gameObject.AddComponent<HorizontalLayoutGroup>();
-			scrollViewLayoutGroup.childControlWidth = false;
-			scrollViewLayoutGroup.childControlHeight = false;
-			scrollViewLayoutGroup.spacing = spacing;
-
-			ScrollRect scrollRect = GameObject.Instantiate(ScrollRectPrefab, scrollViewRect).GetComponent<ScrollRect>();
-			Scrollbar scrollbar = GameObject.Instantiate(ScrollbarPrefab, scrollViewRect).GetComponent<Scrollbar>();
-
-			scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
-			scrollRect.verticalScrollbar = scrollbar;
-			scrollRect.gameObject.name = "Scroll Rect";
-
-			RectTransform scrollbarRect = scrollbar.GetComponent<RectTransform>();
-			scrollbarRect.sizeDelta = new Vector2(30, height);
-			scrollbarRect.localPosition = Vector3.zero;
-			scrollbarRect.gameObject.name = "Scrollbar";
-
-			RectTransform scrollRectTrans = scrollRect.GetComponent<RectTransform>();
-			scrollRectTrans.sizeDelta = new Vector2(width, height);
-			scrollRectTrans.localPosition = Vector3.zero;
-
-			RectTransform scrollRectContent = scrollRect.transform.GetChild(0).GetComponent<RectTransform>();
-			scrollRectContent.sizeDelta = new Vector2(width, height + 160);
-			scrollRectContent.localPosition = Vector3.zero;
-			scrollRectContent.gameObject.name = "Content";
-
-			VerticalLayoutGroup scrollRectContentLayout = scrollRectContent.gameObject.AddComponent<VerticalLayoutGroup>();
+			VerticalLayoutGroup scrollRectContentLayout = scrollViewRect.GetComponentInChildren<VerticalLayoutGroup>();
 			scrollRectContentLayout.childAlignment = childAlignment;
-			scrollRectContentLayout.childForceExpandHeight = false;
-			scrollRectContentLayout.childForceExpandWidth = false;
-			scrollRectContentLayout.childControlHeight = false;
-			scrollRectContentLayout.childControlWidth = false;
-			scrollRectContentLayout.spacing = 10;
+			scrollRectContentLayout.spacing = spacing;
 
-			ContentSizeFitter scrollRectContentFitter = scrollRectContent.gameObject.AddComponent<ContentSizeFitter>();
-			scrollRectContentFitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
+			CustomScrollView customScrollView = scrollViewRect.gameObject.AddComponent<CustomScrollView>();
+			customScrollView.Init(scrollViewRect.GetComponentInChildren<ScrollRect>(), scrollViewRect.GetComponentInChildren<Scrollbar>(), scrollViewRect.GetComponentInChildren<VerticalLayoutGroup>().transform);
+			customScrollView.SetDimensions(width + 45, height);
 
-			for (; scrollRectContent.childCount > 0;) {
-				GameObject.DestroyImmediate(scrollRectContent.GetChild(0).gameObject);
-			}
-
-			CustomScrollView scrollView = scrollViewRect.gameObject.AddComponent<CustomScrollView>();
-			scrollView.Init(scrollRectContent, scrollRect, scrollbar);
-
-			return scrollView;
-		}
-
-		public static void SetupLayoutElement(GameObject gameObject, float width, float height) {
-			LayoutElement layoutElement = gameObject.AddComponent<LayoutElement>();
-			layoutElement.minHeight = height;
-			layoutElement.minWidth = width;
+			return customScrollView;
 		}
 
 		public static CustomButton CreateButton(Transform parent, string text, UnityAction onClick, int fontSize = 14, float width = 160, float height = 50, bool forceCaps = true) {
 			CustomButton button = CreateButton(parent, text, fontSize, width, height, forceCaps);
+
+			UI.Log.LogInfo($"New Button: {button}");
+			UI.Log.LogInfo($"Button.Button: {button.Button}");
+
 			button.Button.onClick.AddListener(onClick);
 
 			return button;
@@ -149,146 +115,160 @@ namespace ULTRAINTERFACE {
 
 		public static CustomButton CreateButton(Transform parent, string text, int fontSize = 14, float width = 160, float height = 50, bool forceCaps = true) {
 			if (!Init()) return null;
-			if (forceCaps) text = text.ToUpper();
 
 			GameObject buttonGO = GameObject.Instantiate(ButtonPrefab, parent);
-			buttonGO.name = CultureInfo.InvariantCulture.TextInfo.ToTitleCase($"{text.ToLower()} Button");
-			buttonGO.AddComponent<UIComponent>();
-
-			RectTransform buttonRect = buttonGO.GetComponent<RectTransform>();
-			buttonRect.sizeDelta = new Vector2(width, height);
-			buttonRect.anchoredPosition = Vector2.zero;
+			buttonGO.name = (text == "" ? "Custom Button" : $"{text.ToLower()} Button");
 
 			Button button = buttonGO.GetComponent<Button>();
-			button.onClick.RemoveAllListeners();
-
-			// Disable all the persisten listeners
-			for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++) {
-				button.onClick.SetPersistentListenerState(i, UnityEventCallState.Off);
-			}
 
 			Text buttonText = buttonGO.GetComponentInChildren<Text>();
-			buttonText.horizontalOverflow = HorizontalWrapMode.Overflow;
-			buttonText.verticalOverflow = VerticalWrapMode.Overflow;
-			buttonText.gameObject.name = "Text";
 			buttonText.fontSize = fontSize;
-			buttonText.text = text;
+			buttonText.SetText(text, forceCaps);
 
-			SetupLayoutElement(buttonGO, width, height);
-			Options.SetupBackSelectOverride(buttonGO);
 
 			CustomButton customButton = buttonGO.AddComponent<CustomButton>();
-			customButton.Init(buttonText, button);
+			customButton.SetupDefaultBackSelectOverride();
+			customButton.SetDimensions(width, height);
+			customButton.Init(button, buttonText);
 
 			return customButton;
 		}
 
 		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged) {
-			return CreateToggle(parent, label, onValueChanged, 75, 14, 170, 20, true);
+			return CreateToggle(parent, label, onValueChanged, 200);
 		}
 
 		public static CustomToggle CreateToggle(Transform parent, string label) {
-			return CreateToggle(parent, label, 75, 14, 170, 20, true);
+			return CreateToggle(parent, label, 200);
 		}
 
-		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float spacing) {
-			return CreateToggle(parent, label, onValueChanged, spacing, 14, 95 + spacing, 20, true);
+		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float width) {
+			return CreateToggle(parent, label, onValueChanged, width, 30);
 		}
 
-		public static CustomToggle CreateToggle(Transform parent, string label, float spacing) {
-			return CreateToggle(parent, label, spacing, 14, 95 + spacing, 20, true);
+		public static CustomToggle CreateToggle(Transform parent, string label, float width) {
+			return CreateToggle(parent, label, width, 30);
 		}
 
-		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float spacing, int labelSize) {
-			return CreateToggle(parent, label, onValueChanged, spacing, labelSize, 95 + spacing, 20, true);
+		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float width, float height) {
+			return CreateToggle(parent, label, onValueChanged, width, height, 14);
 		}
 
-		public static CustomToggle CreateToggle(Transform parent, string label, float spacing, int labelSize) {
-			return CreateToggle(parent, label, spacing, labelSize, 95 + spacing, 20, true);
+		public static CustomToggle CreateToggle(Transform parent, string label, float width, float height) {
+			return CreateToggle(parent, label, width, height, 14);
 		}
 
-		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float spacing, int labelSize, float width, float height) {
-			return CreateToggle(parent, label, onValueChanged, spacing, labelSize, width, height, true);
+		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float width, float height, int labelFontSize) {
+			return CreateToggle(parent, label, onValueChanged, width, height, labelFontSize, 20);
 		}
 
-		public static CustomToggle CreateToggle(Transform parent, string label, float spacing, int labelSize, float width, float height) {
-			return CreateToggle(parent, label, spacing, labelSize, width, height, true);
+		public static CustomToggle CreateToggle(Transform parent, string label, float width, float height, int labelFontSize) {
+			return CreateToggle(parent, label, width, height, labelFontSize, 20);
 		}
 
-		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float spacing, int labelSize, float width, float height, bool forceCaps) {
-			CustomToggle toggle = CreateToggle(parent, label, spacing, labelSize, width, height, forceCaps);
+		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float width, float height, int labelFontSize, float spacing) {
+			return CreateToggle(parent, label, onValueChanged, width, height, labelFontSize, spacing, true);
+		}
+
+		public static CustomToggle CreateToggle(Transform parent, string label, float width, float height, int labelFontSize, float spacing) {
+			return CreateToggle(parent, label, width, height, labelFontSize, spacing, true);
+		}
+
+		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged, float width, float height, int labelFontSize, float spacing, bool forceCaps) {
+			CustomToggle toggle = CreateToggle(parent, label, width, height, labelFontSize, spacing, forceCaps);
 			toggle.Toggle.onValueChanged.AddListener(onValueChanged);
 
 			return toggle;
 		}
 
-		public static CustomToggle CreateToggle(Transform parent, string label, float spacing, int labelSize, float width, float height, bool forceCaps) {
+		public static CustomToggle CreateToggle(Transform parent, string label, float width, float height, int labelFontSize, float spacing, bool forceCaps) {
 			if (!Init()) return null;
-			if (forceCaps) label = label.ToUpper();
 
-			RectTransform containerRect = new GameObject(CultureInfo.InvariantCulture.TextInfo.ToTitleCase($"{label.ToLower()} Toggle")).AddComponent<RectTransform>(); 
-			containerRect.sizeDelta = new Vector2(width, height);
-			containerRect.pivot = new Vector2(0.5f, 0.5f);
-			containerRect.SetParent(parent, false);
+			GameObject toggleInstance = GameObject.Instantiate(TogglePrefab);
+			toggleInstance.name = (label == "" ? "Custom Toggle" : $"{label} Toggle");
+			toggleInstance.transform.SetParent(parent, false);
 
-			GameObject toggleGO = GameObject.Instantiate(TogglePrefab, containerRect);
-			toggleGO.name = "Toggle";
+			Toggle toggle = toggleInstance.GetComponent<Toggle>();
 
-			RectTransform toggleRect = toggleGO.GetComponent<RectTransform>();
-			toggleRect.anchoredPosition = new Vector2(spacing, 0);
-			toggleRect.anchorMin = new Vector2(0.5f, 0.5f);
-			toggleRect.anchorMax = new Vector2(0.5f, 0.5f);
-			toggleRect.pivot = new Vector2(0.5f, 0.5f);
+			HorizontalLayoutGroup toggleLayout = toggleInstance.GetComponent<HorizontalLayoutGroup>();
+			toggleLayout.spacing = spacing;
 
-			Text labelText = CreateText(containerRect, label, labelSize, 160, 30, TextAnchor.MiddleLeft);
+			Text labelText = toggleInstance.GetComponentInChildren<Text>();
+			labelText.GetComponent<RectTransform>().sizeDelta = new Vector2(width - spacing - (height - 10), height);
+			labelText.SetText(label, forceCaps);
+			labelText.fontSize = labelFontSize;
 
-			RectTransform labelRect = labelText.rectTransform;
-			labelRect.anchoredPosition = new Vector2(0, 0);
-			labelRect.anchorMin = new Vector2(0, 0.5f);
-			labelRect.anchorMax = new Vector2(0, 0.5f);
-			labelRect.pivot = new Vector2(0, 0.5f);
-			labelRect.SetAsFirstSibling();
-			
-			Toggle toggle = toggleGO.GetComponent<Toggle>();
-			toggle.onValueChanged.RemoveAllListeners();
+			Image background = toggleInstance.GetComponentInChildren<Image>();
+			background.GetComponent<RectTransform>().sizeDelta = new Vector2(height - 10, height - 10);
 
-			// Disable all the persisten listeners
-			for (int i = 0; i < toggle.onValueChanged.GetPersistentEventCount(); i++) {
-				toggle.onValueChanged.SetPersistentListenerState(i, UnityEventCallState.Off);
-			}
+			Image checkmark = background.transform.GetChild(0).GetComponent<Image>();
 
-			SetupLayoutElement(containerRect.gameObject, width, height);
-			Options.SetupBackSelectOverride(toggleGO);
-
-			CustomToggle customToggle = containerRect.gameObject.AddComponent<CustomToggle>();
-			customToggle.Init(labelText, toggle);
+			CustomToggle customToggle = toggleInstance.AddComponent<CustomToggle>();
+			customToggle.SetupDefaultBackSelectOverride();
+			customToggle.Init(toggle, labelText, background, checkmark);
 
 			return customToggle;
 		}
 
-		public static Text CreateText(Transform parent, string displayText = "New Text", int fontSize = 24, float width = 600, float height = 30, TextAnchor anchor = TextAnchor.MiddleCenter, bool forceCaps = true) {
+		public static CustomText CreateText(Transform parent, string displayText = "New Text", int fontSize = 24, float width = 160, float height = 30, TextAnchor anchor = TextAnchor.MiddleCenter, bool forceCaps = true) {
 			if (!Init()) return null;
-			if (forceCaps) displayText = displayText.ToUpper();
 
 			GameObject textGO = GameObject.Instantiate(TextPrefab, parent);
-			textGO.AddComponent<UIComponent>();
-			textGO.name = "Text";
-
-			RectTransform textRect = textGO.GetComponent<RectTransform>();
-			textRect.sizeDelta = new Vector2(width, height);
-			textRect.anchoredPosition = Vector2.zero;
+			textGO.name = "Custom Text";
 
 			Text text = textGO.GetComponent<Text>();
+			text.SetText(displayText, forceCaps);
 			text.fontSize = fontSize;
-			text.text = displayText;
 			text.alignment = anchor;
 
-			text.horizontalOverflow = HorizontalWrapMode.Overflow;
-			text.verticalOverflow = VerticalWrapMode.Overflow;
+			CustomText customText = textGO.AddComponent<CustomText>();
+			customText.SetDimensions(width, height);
+			customText.Init(text);
 
-			SetupLayoutElement(textGO, width, height);
+			return customText;
+		}
 
-			return text;
+		public static CustomSlider CreateSlider(Transform parent, string label, SliderSettings settings, UnityAction<float> onValueChanged, int labelFontSize = 14, int valueFontSize = 24, bool forceCaps = true) {
+			CustomSlider slider = CreateSlider(parent, label, settings, labelFontSize, valueFontSize, forceCaps);
+			slider.Slider.onValueChanged.AddListener(onValueChanged);
+
+			return slider;
+		}
+
+		public static CustomSlider CreateSlider(Transform parent, string label, SliderSettings settings, int labelFontSize = 14, int valueFontSize = 24, bool forceCaps = true) {
+			if (!Init()) return null;
+			if (forceCaps) {
+				settings.Suffix = settings.Suffix.ToUpper();
+				settings.IfMin = settings.IfMin.ToUpper();
+				settings.IfMax = settings.IfMax.ToUpper();
+			}
+
+			GameObject sliderInstance = GameObject.Instantiate(SliderPrefab, parent);
+			sliderInstance.name = (label == "" ? "Custom Slider" : $"{label} Slider");
+
+			Slider slider = sliderInstance.GetComponentInChildren<Slider>();
+			slider.wholeNumbers = (settings.DecimalType == DecimalType.NoDecimals);
+
+			OptionsMenuToManager[] omtms = sliderInstance.GetComponentsInParent<OptionsMenuToManager>(true);
+			OptionsMenuToManager omtm;
+
+			if (omtms.Length > 0) omtm = omtms[0];
+			else omtm = Resources.FindObjectsOfTypeAll<OptionsMenuToManager>()[0];
+
+			Button selectableButton = sliderInstance.GetComponent<Button>();
+			selectableButton.onClick.AddListener(() => { omtm.SetSelected(slider); });
+
+			Text labelText = sliderInstance.transform.GetChild(0).GetComponent<Text>();
+			labelText.SetText(label, forceCaps);
+			labelText.fontSize = labelFontSize;
+
+			Text valueText = sliderInstance.transform.GetChild(2).GetComponent<Text>();
+			valueText.fontSize = valueFontSize;
+
+			CustomSlider customSlider = sliderInstance.AddComponent<CustomSlider>();
+			customSlider.Init(slider, labelText, valueText, settings);
+
+			return customSlider;
 		}
 
 		public static void Unload() {
@@ -296,6 +276,7 @@ namespace ULTRAINTERFACE {
 			OnSceneLoadActions.Clear();
 
 			Options.Unload();
+			HarmonyInstance.UnpatchSelf();
 
 			foreach (UIComponent ui in Resources.FindObjectsOfTypeAll<UIComponent>()) {
 				GameObject.Destroy(ui.gameObject);
@@ -310,6 +291,24 @@ namespace ULTRAINTERFACE {
 				SceneManager.sceneLoaded += OnSceneLoad;
 
 				HasInitalisedBefore = true;
+
+				Assembly currentAssembly = Assembly.GetExecutingAssembly();
+				string resourceName = currentAssembly.GetManifestResourceNames().First((name) => name.EndsWith("resources.ultrainterface"));
+				Stream resourceStream = currentAssembly.GetManifestResourceStream(resourceName);
+				var bundle = AssetBundle.LoadFromStream(resourceStream);
+
+				ScrollViewPrefab = bundle.LoadAsset<GameObject>("ScrollViewPrefab");
+				ButtonPrefab = bundle.LoadAsset<GameObject>("ButtonPrefab");
+				TogglePrefab = bundle.LoadAsset<GameObject>("TogglePrefab");
+				SliderPrefab = bundle.LoadAsset<GameObject>("SliderPrefab");
+				PanelPrefab = bundle.LoadAsset<GameObject>("PanelPrefab");
+				TextPrefab = bundle.LoadAsset<GameObject>("TextPrefab");
+
+				HarmonyInstance = new Harmony($"ULTRAINTERFACE-{currentAssembly.GetName().Name}");
+				HarmonyInstance.PatchAll(typeof(SliderValueToTextPatch));
+
+				resourceStream.Close();
+				bundle.Unload(false);
 			}
 
 			IsUISetup = SetupUI();
@@ -338,6 +337,8 @@ namespace ULTRAINTERFACE {
 		static bool SetupUI() {
 			if (IsUISetup) return true;
 
+			Camera.main.gameObject.AddComponent<CoroManager>();
+
 			OptionsMenuToManager optionsMenuToManager = GameObject.FindObjectOfType<OptionsMenuToManager>();
 			if (optionsMenuToManager == null) {
 				Log.LogError("Failed to find the OptionsMenu, will attempt to setup UI on next scene load");
@@ -345,73 +346,9 @@ namespace ULTRAINTERFACE {
 			}
 
 			Options.OptionsMenu = optionsMenuToManager.transform.Find("OptionsMenu").GetComponent<RectTransform>();
-			
-			ScrollRectPrefab = Options.OptionsMenu.Find("Gameplay Options").Find("Scroll Rect (1)").gameObject;
-			ScrollbarPrefab = Options.OptionsMenu.Find("Gameplay Options").Find("Scrollbar (1)").gameObject;
-
-			TextPrefab = Options.OptionsMenu.Find("Gameplay Options").Find("Text").gameObject;
-
-			Transform possibleButtonPrefab = Options.OptionsMenu.Find("Gameplay");
-			
-			if (possibleButtonPrefab != null) ButtonPrefab = possibleButtonPrefab.gameObject;
-			else ButtonPrefab = Options.OptionsMenu.Find("Options Scroll View").GetChild(0).GetChild(0).Find("Gameplay").gameObject;
-
-			Options.GameplayOptionsContent = Options.OptionsMenu.Find("Gameplay Options").GetChild(1).GetChild(0);
-
-			TogglePrefab = Options.GameplayOptionsContent.GetComponentInChildren<Toggle>().gameObject;
 
 			Log.LogInfo($"Initalised UI");
 			return true;
 		}
 	}
-
-	public class CustomScrollView : UIComponent {
-		public RectTransform Content { get; private set; }
-		public ScrollRect ScrollRect { get; private set; }
-		public Scrollbar Scrollbar { get; private set; }
-
-		internal void Init(RectTransform content, ScrollRect scrollRect, Scrollbar scrollbar) {
-			if (Content != null) {
-				UI.Log.LogError($"Scroll View \"{gameObject.name}\" already initalised, returning...");
-				return;
-			}
-
-			this.Content = content;
-			this.ScrollRect = scrollRect;
-			this.Scrollbar = scrollbar;
-		}
-	}
-
-	public class CustomToggle : UIComponent {
-		public Text Label { get; private set; }
-		public Toggle Toggle { get; private set; }
-
-		internal void Init(Text label, Toggle toggle) {
-			if (Label != null) {
-				UI.Log.LogError($"Toggle \"{gameObject.name}\" already initalised, returning...");
-				return;
-			}
-
-			this.Label = label;
-			this.Toggle = toggle;
-		}
-	}
-
-	public class CustomButton : UIComponent {
-		public Text Text { get; private set; }
-		public Button Button { get; private set; }
-
-		internal void Init(Text text, Button button) {
-			if (Text != null) {
-				UI.Log.LogError($"Button \"{gameObject.name}\" already initalised, returning...");
-				return;
-			}
-
-			this.Text = text;
-			this.Button = button;
-		}
-	}
-
-	// This is purely used to tag UI created with this library
-	public class UIComponent : MonoBehaviour {}
 }

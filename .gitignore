@@ -1,7 +1,5 @@
 bin/
 obj/
 
-contentFiles/any/any/src/
+**/contentFiles/*
 *.nupkg
-
-build.ps1
