@@ -312,10 +312,12 @@ namespace ULTRAINTERFACE {
 
 				HasInitalisedBefore = true;
 
-				Assembly currentAssembly = Assembly.GetExecutingAssembly();
-				string resourceName = currentAssembly.GetManifestResourceNames().First((name) => name.EndsWith("resources.ultrainterface"));
-				Stream resourceStream = currentAssembly.GetManifestResourceStream(resourceName);
+				EmbedManager.CurrentAssembly = Assembly.GetExecutingAssembly();
+				string resourceName = EmbedManager.CurrentAssembly.GetManifestResourceNames().First((name) => name.EndsWith("resources.ultrainterface"));
+				Stream resourceStream = EmbedManager.CurrentAssembly.GetManifestResourceStream(resourceName);
 				var bundle = AssetBundle.LoadFromStream(resourceStream);
+
+				EmbedManager.ResourceNamespace = resourceName.Replace(".resources.ultrainterface", "");
 
 				ScrollViewPrefab = bundle.LoadAsset<GameObject>("ScrollViewPrefab");
 				ButtonPrefab = bundle.LoadAsset<GameObject>("ButtonPrefab");
@@ -324,7 +326,7 @@ namespace ULTRAINTERFACE {
 				PanelPrefab = bundle.LoadAsset<GameObject>("PanelPrefab");
 				TextPrefab = bundle.LoadAsset<GameObject>("TextPrefab");
 
-				HarmonyInstance = new Harmony($"ULTRAINTERFACE-{currentAssembly.GetName().Name}");
+				HarmonyInstance = new Harmony($"ULTRAINTERFACE-{EmbedManager.CurrentAssembly.GetName().Name}");
 				HarmonyInstance.PatchAll(typeof(SliderValueToTextPatch));
 
 				resourceStream.Close();

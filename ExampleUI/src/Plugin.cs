@@ -38,13 +38,9 @@ namespace ExampleUI
             harmony.PatchAll();
             Log.LogInfo("Applied All Patches");
 
-            var assembly = typeof(Plugin).GetTypeInfo().Assembly;
-            Stream resourceStream = assembly.GetManifestResourceStream("ExampleUI.resources.exampleui");
-
-            var bundle = AssetBundle.LoadFromStream(resourceStream);
-            GabrielGaming = bundle.LoadAsset<AudioClip>("GabrielGaming");
-            resourceStream.Close();
-            bundle.Unload(false);
+            EmbedManager.LoadEmbeddedAssetBundle("resources.exampleui", (bundle) => {
+                GabrielGaming = bundle.LoadAsset<AudioClip>("GabrielGaming");
+            });
 
             Log.LogInfo("Loaded Assets from Asset Bundle");
 
