@@ -99,7 +99,7 @@ jobs:
 
     - name: Build
       run: |
-        ./build.ps1 -Release -DontInstallLocally
+        ./build.ps1 -Release -DontInstallLocally -Version "${{ steps.get_tag_version.outputs.VERSION }}"
 
     - name: Get Release Upload URL
       id: get_upload_url
