@@ -70,7 +70,7 @@ jobs:
             $childNode.InnerText = "${{ steps.get_tag_version.outputs.VERSION }}"
           }
           if ($childNode.Name -eq "releaseNotes") {
-            $childNode.InnerText = ("${{ steps.get_upload_body.outputs.BODY }}" -replace "\\r\\n","`r`n")
+            $childNode.InnerText = ("${{ steps.get_upload_body.outputs.BODY }}" -replace "\\r\\n","`n")
           }
         }
 
@@ -120,9 +120,18 @@ jobs:
         git branch version-${{ steps.get_tag_version.outputs.TAG }}
         git push -u origin version-${{ steps.get_tag_version.outputs.TAG }} --force --tags
 
-    - name: Build
+    - name: Build Package
       run: |
-        ./build.ps1 -Release -Version "${{ steps.get_tag_version.outputs.VERSION }}"
+        ./build.ps1 -Release -DontInstallLocally -OnlyBuildPackage
+
+    # - name: Upload To NuGet.org
+    #   run: |
+    #     nuget setApiKey ${{ secrets.NUGET_API_KEY }}
+    #     nuget push ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source https://api.nuget.org/v3/index.json
+
+    - name: Build Mod
+      run: |
+        ./build.ps1 -Release -DontInstallLocally -OnlyBuildMod
         
     - name: Upload NuGet Package
       uses: actions/upload-release-asset@v1
