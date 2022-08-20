@@ -462,7 +462,7 @@ PrefabInstance:
     - target: {fileID: 4807861194166436732, guid: 5d1239fbc67fdad99a8fc7420d820031,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 140
       objectReference: {fileID: 0}
     - target: {fileID: 4807861194166436732, guid: 5d1239fbc67fdad99a8fc7420d820031,
         type: 3}
@@ -1674,7 +1674,7 @@ PrefabInstance:
     - target: {fileID: 4807861194166436732, guid: 5d1239fbc67fdad99a8fc7420d820031,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 390
       objectReference: {fileID: 0}
     - target: {fileID: 4807861194166436732, guid: 5d1239fbc67fdad99a8fc7420d820031,
         type: 3}
@@ -2384,7 +2384,7 @@ PrefabInstance:
     - target: {fileID: 4807861194166436732, guid: 5d1239fbc67fdad99a8fc7420d820031,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 4807861194166436732, guid: 5d1239fbc67fdad99a8fc7420d820031,
         type: 3}
@@ -2555,7 +2555,7 @@ PrefabInstance:
     - target: {fileID: 4807861194166436732, guid: 5d1239fbc67fdad99a8fc7420d820031,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 140
       objectReference: {fileID: 0}
     - target: {fileID: 4807861194166436732, guid: 5d1239fbc67fdad99a8fc7420d820031,
         type: 3}
@@ -2983,7 +2983,7 @@ PrefabInstance:
     - target: {fileID: 6227332944720486736, guid: 6fee29763ed304648b87454512d7e1b0,
         type: 3}
       propertyPath: m_Name
-      value: PannelPrefab
+      value: PanelPrefab
       objectReference: {fileID: 0}
     - target: {fileID: 6227332944720486736, guid: 6fee29763ed304648b87454512d7e1b0,
         type: 3}

@@ -83,7 +83,7 @@ namespace ExampleUI
                     float defaultAspect = Camera.main.aspect;
                     float newAspect = CalculateAspect(defaultAspect);
 
-                    foreach (Camera cam in Camera.allCameras) {
+                    foreach (Camera cam in Resources.FindObjectsOfTypeAll<Camera>()) {
                         if (enabled) cam.aspect = newAspect;
                         else cam.ResetAspect();
                     }
@@ -100,7 +100,7 @@ namespace ExampleUI
                     float defaultAspect = Camera.main.aspect;
                     float newAspect = CalculateAspect(defaultAspect);
 
-                    foreach (Camera cam in Camera.allCameras) {
+                    foreach (Camera cam in Resources.FindObjectsOfTypeAll<Camera>()) {
                         cam.aspect = newAspect;
                     }
                 }, forceCaps: false);
