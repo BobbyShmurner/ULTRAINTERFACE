@@ -22,6 +22,15 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1
 
+    - name: Get Tag Version
+      id: get_tag_version
+      run: |
+        echo "${env:GITHUB_REF}"
+        $tag = ${env:GITHUB_REF} -replace "refs/tags/" -replace ""
+        $version = ${env:GITHUB_REF} -replace "refs/tags/v" -replace ""
+        echo "::set-output name=TAG::$tag"
+        echo "::set-output name=VERSION::$version"
+
     # Get release that was created for this tag
     - name: Get Release
       uses: octokit/request-action@v2.x
