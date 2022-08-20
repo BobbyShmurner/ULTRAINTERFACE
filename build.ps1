@@ -14,6 +14,8 @@ $LocalNuGetSource = "./LocalNuGetSource" # Where to store your local nuget cache
 $NuGetPackageCache = ((dotnet nuget locals global-packages --list) -replace "`n" -replace "`r" -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
 $OriginalColor = $Host.UI.RawUI.ForegroundColor
 
+Write-Output $NuGetPackageCache
+
 Write-Output "- Removing Files"
 
 Remove-Item -Recurse -Force $LocalNuGetSource/ultrainterface/$Version/ -ErrorAction 'SilentlyContinue'
