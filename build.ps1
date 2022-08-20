@@ -11,10 +11,13 @@ $LocalNuGetSource = "./LocalNuGetSource" # Where to store your local nuget cache
 
 # -- End Config -- #
 
-$NuGetPackageCache = ((dotnet nuget locals global-packages --list) -replace "`n" -replace "`r" -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
+$OgOutput = (dotnet nuget locals global-packages --list)
+
+$NuGetPackageCache = (($OgOutput) -replace "`n" -replace "`r" -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
 $OriginalColor = $Host.UI.RawUI.ForegroundColor
 
-Write-Output $NuGetPackageCache
+Write-Output "OG: $OgOutput"
+Write-Output "New: $NuGetPackageCache"
 
 Write-Output "- Removing Files"
 
