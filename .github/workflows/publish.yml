@@ -41,14 +41,37 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Set NuGet Package Version
+    - name: Get Release Upload URL
+      id: get_upload_url
+      run: |
+        $url = ${env:response} | jq -r '.upload_url'
+        echo ${env:response}
+        echo $url
+        echo "::set-output name=UPLOAD_URL::$url"
+      env:
+        response: ${{ steps.get_release.outputs.data }}
+
+    - name: Get Release Body
+      id: get_upload_body
+      run: |
+        $body = ${env:response} | jq -r '.body'
+        echo ${env:response}
+        echo $body
+        echo "::set-output name=BODY::$body"
+      env:
+        response: ${{ steps.get_release.outputs.data }}
+
+    - name: Set NuGet Package Version And Description
       run: |
         [xml] $doc = Get-Content("./ULTRAINTERFACE/Package/ULTRAINTERFACE.nuspec")
 
         foreach ($childNode in $doc.package.metadata.ChildNodes) {
-          if ($childNode.Name -ne "version") { continue }
-
-          $childNode.InnerText = "${{ steps.get_tag_version.outputs.VERSION }}"
+          if ($childNode.Name -eq "version") {
+            $childNode.InnerText = "${{ steps.get_tag_version.outputs.VERSION }}"
+          }
+          if ($childNode.Name -eq "releaseNotes") {
+            $childNode.InnerText = ("${{ steps.get_upload_body.outputs.BODY }}" -replace "\\r\\n","`r`n")
+          }
         }
 
         $doc.Save((Resolve-Path "./ULTRAINTERFACE/Package/ULTRAINTERFACE.nuspec")) | Out-Null
@@ -100,16 +123,6 @@ jobs:
     - name: Build
       run: |
         ./build.ps1 -Release -Version "${{ steps.get_tag_version.outputs.VERSION }}"
-
-    - name: Get Release Upload URL
-      id: get_upload_url
-      run: |
-        $url = ${env:response} | jq -r '.upload_url'
-        echo ${env:response}
-        echo $url
-        echo "::set-output name=upload_url::$url"
-      env:
-        response: ${{ steps.get_release.outputs.data }}
         
     - name: Upload NuGet Package
       uses: actions/upload-release-asset@v1
