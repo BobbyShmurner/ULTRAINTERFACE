@@ -15,6 +15,22 @@ namespace ULTRAINTERFACE {
 			return CurrentAssembly.GetManifestResourceNames().ToList();
 		}
 
+		public static Texture2D LoadEmbeddedTexture(string resourceName) {
+			if (!UI.Init()) return null;
+
+			Stream resourceStream = CurrentAssembly.GetManifestResourceStream($"{ResourceNamespace}.{resourceName}");
+			if (resourceStream == null) {
+				UI.Log.LogError($"Failed to find Embedded Texture \"{ResourceNamespace}.{resourceName}\"");
+				return null;
+			}
+
+			Texture2D texture = new Texture2D(2, 2);
+			texture.LoadImage(resourceStream.ToByteArray());
+
+			resourceStream.Close();
+			return texture;
+		}
+
 		public static void LoadEmbeddedFile(string resourceName, Action<StreamReader> action) {
 			if (!UI.Init()) return;
 
