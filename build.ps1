@@ -1,6 +1,7 @@
 param (
 	[Switch] $Release,
-	[String] $Version="0.0.1"
+	[Switch] $DontInstallLocally,
+	[String] $Version = "0.0.1"
 )
 
 # ---- Config ---- #
@@ -10,7 +11,7 @@ $LocalNuGetSource = "./LocalNuGetSource" # Where to store your local nuget cache
 
 # -- End Config -- #
 
-$NuGetPackageCache = ((nuget locals global-packages -list) -replace "global-packages: ").TrimEnd('\').TrimEnd('/')
+$NuGetPackageCache = ((dotnet nuget locals global-packages --list) -replace "global-packages: ").TrimEnd('\').TrimEnd('/')
 $OriginalColor = $Host.UI.RawUI.ForegroundColor
 
 Write-Output "- Removing Files"
@@ -44,8 +45,12 @@ Write-Output "- Creating and Installing NuGet Package: `n"
 nuget pack ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nuspec -OutputDirectory ./ULTRAINTERFACE/Package/ -OutputFileNamesWithoutVersion
 $packExitCode = $LASTEXITCODE
 
-nuget add ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source $LocalNuGetSource
-$installExitCode = $LASTEXITCODE
+if (!$DontInstallLocally) {
+	nuget add ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source $LocalNuGetSource
+	$installExitCode = $LASTEXITCODE
+} else {
+	$installExitCode = 0
+}
 
 Write-Output "`n- Cleaning up"
 
@@ -59,25 +64,27 @@ if ($packExitCode -ne 0 -or $installExitCode -ne 0) {
 	exit 1
 }
 
-Write-Output "- Adding local source to NuGet.Config"
+if (!$DontInstallLocally) {
+	Write-Output "- Adding local source to NuGet.Config"
 
-[xml] $doc = Get-Content("./ExampleUI/NuGet.Config")
+	[xml] $doc = Get-Content("./ExampleUI/NuGet.Config")
 
-$newNode = $doc.CreateElement("add")
+	$newNode = $doc.CreateElement("add")
 
-$keyAttribute = $doc.CreateAttribute("key")
-$keyAttribute.Value = "ULTRAINTERFACE"
+	$keyAttribute = $doc.CreateAttribute("key")
+	$keyAttribute.Value = "ULTRAINTERFACE"
 
-$valueAttribute = $doc.CreateAttribute("value")
-$valueAttribute.Value = (Resolve-Path $LocalNuGetSource)
+	$valueAttribute = $doc.CreateAttribute("value")
+	$valueAttribute.Value = (Resolve-Path $LocalNuGetSource)
 
-$newNode.Attributes.Append($keyAttribute) | Out-Null
-$newNode.Attributes.Append($valueAttribute) | Out-Null
+	$newNode.Attributes.Append($keyAttribute) | Out-Null
+	$newNode.Attributes.Append($valueAttribute) | Out-Null
 
-$packageSources = $doc.configuration.packageSources
-$packageSources.AppendChild($newNode) | Out-Null
+	$packageSources = $doc.configuration.packageSources
+	$packageSources.AppendChild($newNode) | Out-Null
 
-$doc.Save("./ExampleUI/NuGet.Config") | Out-Null
+	$doc.Save((Resolve-Path "./ExampleUI/NuGet.Config")) | Out-Null
+}
 
 Write-Output "- Building Example Mod: `n"
 
@@ -89,15 +96,17 @@ if ($Release) {
 
 $buildExitCode = $LASTEXITCODE
 
-Write-Output "`n- Reverting changes to NuGet.Config"
+if (!$DontInstallLocally) {
+	Write-Output "`n- Reverting changes to NuGet.Config"
 
-$packageSources.RemoveChild($newNode) | Out-Null
-$doc.Save("./ExampleUI/NuGet.Config") | Out-Null
+	$packageSources.RemoveChild($newNode) | Out-Null
+	$doc.Save((Resolve-Path "./ExampleUI/NuGet.Config")) | Out-Null
 
-Write-Output "- Linking NuGet Files to Source Files"
+	Write-Output "- Linking NuGet Files to Source Files"
 
-Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/$Version/contentFiles/any/any/src/ -ErrorAction 'SilentlyContinue'
-New-Item -ItemType SymbolicLink -Path $NuGetPackageCache/ultrainterface/$Version/contentFiles/any/any/src -Target (Resolve-Path ./ULTRAINTERFACE/src/) | Out-Null
+	Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/$Version/contentFiles/any/any/src/ -ErrorAction 'SilentlyContinue'
+	New-Item -ItemType SymbolicLink -Path $NuGetPackageCache/ultrainterface/$Version/contentFiles/any/any/src -Target (Resolve-Path ./ULTRAINTERFACE/src/) | Out-Null
+}
 
 if (!(Test-Path $UltrakillInstall)) {
 	$Host.UI.RawUI.ForegroundColor = "Red"
