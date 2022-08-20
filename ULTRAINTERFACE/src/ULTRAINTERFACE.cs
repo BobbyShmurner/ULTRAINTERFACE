@@ -44,7 +44,9 @@ namespace ULTRAINTERFACE {
 			}
 		}
 
-		public static RectTransform CreateHorizontalLayoutGroup(Transform parent, float width = 500, float height = 20, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter) {
+		public static RectTransform CreateHorizontalLayoutGroup(Transform parent, float width = 500, float height = 20, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter, RectOffset padding = null) {
+			if (padding == null) padding = new RectOffset(0, 0, 0, 0);
+			
 			HorizontalLayoutGroup layout = new GameObject("Horizontal Layout Group").AddComponent<HorizontalLayoutGroup>();
 			layout.gameObject.AddComponent<UIComponent>();
 
@@ -56,6 +58,7 @@ namespace ULTRAINTERFACE {
 			layout.childForceExpandHeight = false;
 			layout.childForceExpandWidth = false;
 			layout.childControlHeight = false;
+			layout.padding = padding;
 			layout.spacing = spacing;
 
 			ContentSizeFitter sizeFitter = layout.gameObject.AddComponent<ContentSizeFitter>();
@@ -64,7 +67,9 @@ namespace ULTRAINTERFACE {
 			return layoutRect;
 		}
 
-		public static RectTransform CreateVerticalLayoutGroup(Transform parent, float width = 20, float height = 500, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter) {
+		public static RectTransform CreateVerticalLayoutGroup(Transform parent, float width = 20, float height = 500, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter, RectOffset padding = null) {
+			if (padding == null) padding = new RectOffset(0, 0, 0, 0);
+			
 			VerticalLayoutGroup layout = new GameObject("Vertical Layout Group").AddComponent<VerticalLayoutGroup>();
 			layout.gameObject.AddComponent<UIComponent>();
 
@@ -76,6 +81,7 @@ namespace ULTRAINTERFACE {
 			layout.childForceExpandHeight = false;
 			layout.childForceExpandWidth = false;
 			layout.childControlWidth = false;
+			layout.padding = padding;
 			layout.spacing = spacing;
 
 			ContentSizeFitter sizeFitter = layout.gameObject.AddComponent<ContentSizeFitter>();
@@ -267,8 +273,9 @@ namespace ULTRAINTERFACE {
 			return customSlider;
 		}
 
-		public static RectTransform CreatePanel(Transform parent, TextAnchor childAlignment = TextAnchor.MiddleLeft, float spacing = 20, float transparency = 1, string name = "Custom Panel") {
+		public static RectTransform CreatePanel(Transform parent, TextAnchor childAlignment = TextAnchor.MiddleLeft, float spacing = 20, float transparency = 1, RectOffset padding = null, string name = "Custom Panel") {
 			if (!Init()) return null;
+			if (padding == null) padding = new RectOffset(20, 20, 15, 15);
 
 			RectTransform panel = GameObject.Instantiate(UI.PanelPrefab, parent).GetComponent<RectTransform>();
 			panel.gameObject.AddComponent<UIComponent>();

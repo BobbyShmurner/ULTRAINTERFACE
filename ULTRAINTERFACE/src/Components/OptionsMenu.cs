@@ -33,8 +33,8 @@ namespace ULTRAINTERFACE {
 			}
 		}
 
-		public RectTransform AddOptionsPanel(TextAnchor anchor = TextAnchor.MiddleLeft, float spacing = 20, float transparency = 1, string name = "Options Panel") {
-			RectTransform panel = UI.CreatePanel(Content, anchor, spacing, transparency, name);
+		public RectTransform AddOptionsPanel(TextAnchor anchor = TextAnchor.MiddleLeft, float spacing = 20, float transparency = 1, RectOffset padding = null, string name = "Options Panel") {
+			RectTransform panel = UI.CreatePanel(Content, anchor, spacing, transparency, padding, name);
 
 			ContentSizeFitter sizeFitter = panel.GetComponent<ContentSizeFitter>();
 			sizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;

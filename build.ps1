@@ -48,6 +48,12 @@ echo "- Making Directories"
 mkdir -p ./ULTRAINTERFACE/Package/contentFiles/any/any/resources/
 mkdir -p ./ULTRAINTERFACE/Package/contentFiles/any/any/src/
 
+if (Test-Path "./UnityProject/build.lock") {
+	echo "`n-- Waiting for Asset Bundles to build --`n"
+
+	while (Test-Path "./UnityProject/build.lock") { Start-Sleep -Milliseconds 100 }
+}
+
 echo "- Copying Files"
 
 cp ./UnityProject/Assets/StreamingAssets/ultrainterface ./ULTRAINTERFACE/resources/
