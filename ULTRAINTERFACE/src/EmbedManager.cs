@@ -15,12 +15,28 @@ namespace ULTRAINTERFACE {
 			return CurrentAssembly.GetManifestResourceNames().ToList();
 		}
 
-		public static void LoadEmbeddedAssetBundle(string name, Action<AssetBundle> action) {
+		public static void LoadEmbeddedFile(string resourceName, Action<StreamReader> action) {
 			if (!UI.Init()) return;
 
-			Stream resourceStream = CurrentAssembly.GetManifestResourceStream($"{ResourceNamespace}.{name}");
+			Stream resourceStream = CurrentAssembly.GetManifestResourceStream($"{ResourceNamespace}.{resourceName}");
 			if (resourceStream == null) {
-				UI.Log.LogError($"Failed to find Embedded AssetBundle \"{ResourceNamespace}.{name}\"");
+				UI.Log.LogError($"Failed to find Embedded File \"{ResourceNamespace}.{resourceName}\"");
+				return;
+			}
+
+			StreamReader reader = new StreamReader(resourceStream);
+			action(reader);
+
+			reader.Close();
+			resourceStream.Close();
+		}
+
+		public static void LoadEmbeddedAssetBundle(string resourceName, Action<AssetBundle> action) {
+			if (!UI.Init()) return;
+
+			Stream resourceStream = CurrentAssembly.GetManifestResourceStream($"{ResourceNamespace}.{resourceName}");
+			if (resourceStream == null) {
+				UI.Log.LogError($"Failed to find Embedded AssetBundle \"{ResourceNamespace}.{resourceName}\"");
 				return;
 			}
 
