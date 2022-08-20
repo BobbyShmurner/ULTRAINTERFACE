@@ -1,5 +1,6 @@
 param (
-	[Switch] $Release
+	[Switch] $Release,
+	[String] $Version="0.0.1"
 )
 
 # ---- Config ---- #
@@ -14,8 +15,8 @@ $OriginalColor = $Host.UI.RawUI.ForegroundColor
 
 Write-Output "- Removing Files"
 
-Remove-Item -Recurse -Force $LocalNuGetSource/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
-Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
+Remove-Item -Recurse -Force $LocalNuGetSource/ultrainterface/$Version/ -ErrorAction 'SilentlyContinue'
+Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/$Version/ -ErrorAction 'SilentlyContinue'
 Remove-Item -Recurse -Force ./ULTRAINTERFACE/Package/contentFiles/ -ErrorAction 'SilentlyContinue'
 
 Remove-Item -Force ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -ErrorAction 'SilentlyContinue'
@@ -95,8 +96,8 @@ $doc.Save("./ExampleUI/NuGet.Config") | Out-Null
 
 Write-Output "- Linking NuGet Files to Source Files"
 
-Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src/ -ErrorAction 'SilentlyContinue'
-New-Item -ItemType SymbolicLink -Path $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src -Target (Resolve-Path ./ULTRAINTERFACE/src/) | Out-Null
+Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/$Version/contentFiles/any/any/src/ -ErrorAction 'SilentlyContinue'
+New-Item -ItemType SymbolicLink -Path $NuGetPackageCache/ultrainterface/$Version/contentFiles/any/any/src -Target (Resolve-Path ./ULTRAINTERFACE/src/) | Out-Null
 
 if (!(Test-Path $UltrakillInstall)) {
 	$Host.UI.RawUI.ForegroundColor = "Red"
