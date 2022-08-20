@@ -1,5 +1,6 @@
 {
 	"files.exclude": {
-		"**/UnityProject/": true
+		"**/UnityProject/": true,
+		"**/LocalNuGetSource/": true
 	}
 }

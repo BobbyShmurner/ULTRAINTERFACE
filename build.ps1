@@ -1,104 +1,114 @@
-# -------------------------------------------------------------	#
-#           THIS SCRIPT WILL NOT WORK ON YOUR PC!!!				#
-#																#
-#    Feel free to use it as a base to your own build script		#
-# Just don't even try to run this, because it simpy won't work	#
-#																#
-#    The only reason this script is in the repo is because		#
-#     I didn't wanna loose it in case something happens to		#
-#                 my local copy of the script					#
-# 																#
-#   Also checkout the GitHub build action for a step-by-step	#
-#  look at how to build and use a local copy of ULTRAINTERFACE	#
-#																#
-#     If you aren't planning on developing ULTRAINTERFACE,		#
-#        but instead are just looking for a build of the		#
-#     master branch, head over to the Actions tab on GitHub		#
-#         for a compiled version of the master branch			#
-# ------------------------------------------------------------- #
+# ---- Config ---- #
 
+$UltrakillInstall = "/ssd/Steam/steamapps/common/ULTRAKILL" # The path to your ULTRAKILL install
+$LocalNuGetSource = "./LocalNuGetSource" # Where to store your local nuget cache (for some reason this is also required on top of the nuget cache)
+
+# -- End Config -- #
+
+$NuGetPackageCache = ((nuget locals global-packages -list) -replace "global-packages: ").TrimEnd('\').TrimEnd('/')
 $OriginalColor = $Host.UI.RawUI.ForegroundColor
-$Host.UI.RawUI.ForegroundColor = "Red"
 
-echo "# --------------------------------------------------------------------------------- #"
-echo "#                    THIS SCRIPT WILL NOT WORK ON YOUR PC!!!!!                      #"
-echo "#            IT IS NOT DESIGNED TO RUN ON OTHER PEOPLE'S COMPUTERS!!!!!             #"
-echo "# THE ONLY REASON IT IS IN THE REPO IS BECAUSE I DON'T WANNA LOOSE THIS SCRIPT!!!!! #"
-echo "#                                                                                   #"
-echo "#           View the comment at the top of this script for more info                #"
-echo "# --------------------------------------------------------------------------------- #"
+Write-Output "- Removing Files"
 
-$Host.UI.RawUI.ForegroundColor = $OriginalColor
+Remove-Item -Recurse -Force $LocalNuGetSource/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
+Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
+Remove-Item -Recurse -Force ./ULTRAINTERFACE/Package/contentFiles/ -ErrorAction 'SilentlyContinue'
 
-if ($env:HOME -ne "/home/bobby" -or $env:CAN_RUN_ULTRAINTERFACE_BUILD_SCRIPT -ne "1") {
-	exit 1
-}
+Remove-Item -Force ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -ErrorAction 'SilentlyContinue'
+Remove-Item -Force ./ULTRAINTERFACE/resources/ultrainterface -ErrorAction 'SilentlyContinue'
 
-echo "`n- Removing Files"
+Write-Output "- Making Directories"
 
-rm -rf ~/Documents/dev/NuGetSource/ultrainterface/0.0.1/
-rm -rf /home/bobby/.nuget/packages/ultrainterface/
-rm -rf ./ULTRAINTERFACE/Package/contentFiles/
-
-rm -f ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg
-rm -f ./ULTRAINTERFACE/resources/ultrainterface
-
-echo "- Making Directories"
-
-mkdir -p ./ULTRAINTERFACE/Package/contentFiles/any/any/resources/
-mkdir -p ./ULTRAINTERFACE/Package/contentFiles/any/any/src/
+New-Item ./ULTRAINTERFACE/Package/contentFiles/any/any/resources/ -ItemType Directory | Out-Null
+New-Item ./ULTRAINTERFACE/Package/contentFiles/any/any/src/ -ItemType Directory | Out-Null
 
 if (Test-Path "./UnityProject/build.lock") {
-	echo "`n-- Waiting for Asset Bundles to build --`n"
+	Write-Output "`n-- Waiting for Asset Bundles to build --`n"
 
 	while (Test-Path "./UnityProject/build.lock") { Start-Sleep -Milliseconds 100 }
 }
 
-echo "- Copying Files"
+Write-Output "- Copying Files"
 
-cp ./UnityProject/Assets/StreamingAssets/ultrainterface ./ULTRAINTERFACE/resources/
-cp -a ./ULTRAINTERFACE/resources/. ./ULTRAINTERFACE/Package/contentFiles/any/any/resources/
-cp -a ./ULTRAINTERFACE/src/. ./ULTRAINTERFACE/Package/contentFiles/any/any/src/
+Copy-Item ./UnityProject/Assets/StreamingAssets/ultrainterface ./ULTRAINTERFACE/resources/
+Copy-Item ./ULTRAINTERFACE/resources/* ./ULTRAINTERFACE/Package/contentFiles/any/any/resources/ -Recurse
+Copy-Item ./ULTRAINTERFACE/src/* ./ULTRAINTERFACE/Package/contentFiles/any/any/src/ -Recurse
 
-echo "- Creating and Installing NuGet Package: `n"
+Write-Output "- Creating and Installing NuGet Package: `n"
 
-nuget pack ULTRAINTERFACE/Package/ULTRAINTERFACE.nuspec -OutputDirectory ./ULTRAINTERFACE/Package/ -OutputFileNamesWithoutVersion
-nuget add ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source ~/Documents/dev/NuGetSource
+nuget pack ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nuspec -OutputDirectory ./ULTRAINTERFACE/Package/ -OutputFileNamesWithoutVersion
+$packExitCode = $LASTEXITCODE
 
-echo "`n- Building Example Mod: `n"
+nuget add ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source $LocalNuGetSource
+$installExitCode = $LASTEXITCODE
+
+Write-Output "`n- Cleaning up"
+
+Remove-Item -Recurse -Force ./ULTRAINTERFACE/Package/contentFiles/ -ErrorAction 'SilentlyContinue'
+Remove-Item -Force ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -ErrorAction 'SilentlyContinue'
+
+if ($packExitCode -ne 0 -or $installExitCode -ne 0) {
+	$Host.UI.RawUI.ForegroundColor = "Red"
+	Write-Output "`n-- Build FAILED! --"
+	$Host.UI.RawUI.ForegroundColor = $OriginalColor
+
+	exit 1
+}
+
+Write-Output "- Adding local source to NuGet.Config"
+
+[xml] $doc = Get-Content("./ExampleUI/NuGet.Config")
+
+$newNode = $doc.CreateElement("add")
+
+$keyAttribute = $doc.CreateAttribute("key")
+$keyAttribute.Value = "ULTRAINTERFACE"
+
+$valueAttribute = $doc.CreateAttribute("value")
+$valueAttribute.Value = (Resolve-Path $LocalNuGetSource)
+
+$newNode.Attributes.Append($keyAttribute) | Out-Null
+$newNode.Attributes.Append($valueAttribute) | Out-Null
+
+$packageSources = $doc.configuration.packageSources
+$packageSources.AppendChild($newNode) | Out-Null
+
+$doc.Save("./ExampleUI/NuGet.Config") | Out-Null
+
+Write-Output "- Building Example Mod: `n"
 
 dotnet build ./ExampleUI/ExampleUI.csproj
 $buildExitCode = $LASTEXITCODE
 
-echo "`n- Linking NuGet Files to Source Files"
+Write-Output "`n- Reverting changes to NuGet.Config"
 
-$cwd = (Get-Location).path
+$packageSources.RemoveChild($newNode) | Out-Null
+$doc.Save("./ExampleUI/NuGet.Config") | Out-Null
 
-rm -rf /home/bobby/.nuget/packages/ultrainterface/0.0.1/contentFiles/any/any/src/
-ln -s $cwd/ULTRAINTERFACE/src ~/.nuget/packages/ultrainterface/0.0.1/contentFiles/any/any/
+Write-Output "- Linking NuGet Files to Source Files"
 
-echo "- Cleaning up"
+Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src/ -ErrorAction 'SilentlyContinue'
+New-Item -ItemType SymbolicLink -Path $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src -Target (Resolve-Path ./ULTRAINTERFACE/src/) | Out-Null
 
-rm -rf ./ULTRAINTERFACE/Package/contentFiles/
-rm -f ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg
-
-echo "- Copying Example Mod to Scripts Folder"
-
-cp ./ExampleUI/bin/Debug/net471/ExampleUI.dll /ssd/Steam/steamapps/common/ULTRAKILL/BepInEx/scripts
+if (!(Test-Path $UltrakillInstall)) {
+	$Host.UI.RawUI.ForegroundColor = "Red"
+	Write-Output "`n- Could not find ULTRAKILL install at `"$UltrakillInstall`"!"
+	Write-Output "- Cannot copy the ExampleUI mod to the scripts folder"
+	Write-Output "- Please specify the correct path at the top of this script to allow for auto-install of the mod"
+	$Host.UI.RawUI.ForegroundColor = $OriginalColor
+} else {
+	Write-Output "- Copying Example Mod to Scripts Folder"
+	cp ./ExampleUI/bin/Debug/net471/ExampleUI.dll $UltrakillInstall/BepInEx/scripts
+}
 
 if ($buildExitCode -ne 0) {
 	$Host.UI.RawUI.ForegroundColor = "Red"
-	echo "`n-- Build FAILED! --"
+	Write-Output "`n-- Build FAILED! --"
 	$Host.UI.RawUI.ForegroundColor = $OriginalColor
+
+	exit 1
 } else {
 	$Host.UI.RawUI.ForegroundColor = "Green"
-	echo "`n-- Build Complete! --"
+	Write-Output "`n-- Build Complete! --"
 	$Host.UI.RawUI.ForegroundColor = $OriginalColor
-}
-
-$process = Get-Process "ULTRAKILL.exe" -ErrorAction SilentlyContinue
-if (-not $process) {
-	echo "`n- Launching ULTRAKILL:`n"
-	steam steam://rungameid/1229490
-	echo "`n- Lanched ULTRAKILL!"
 }
