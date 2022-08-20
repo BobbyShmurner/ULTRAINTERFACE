@@ -124,10 +124,10 @@ jobs:
       run: |
         ./build.ps1 -Release -DontInstallLocally -OnlyBuildPackage
 
-    # - name: Upload To NuGet.org
-    #   run: |
-    #     nuget setApiKey ${{ secrets.NUGET_API_KEY }}
-    #     nuget push ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source https://api.nuget.org/v3/index.json
+    - name: Upload To NuGet.org
+      run: |
+        nuget setApiKey ${{ secrets.NUGET_API_KEY }}
+        nuget push ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source https://api.nuget.org/v3/index.json
 
     - name: Build Mod
       run: |
