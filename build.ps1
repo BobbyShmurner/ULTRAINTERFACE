@@ -1,3 +1,7 @@
+param (
+	[Switch] $Release
+)
+
 # ---- Config ---- #
 
 $UltrakillInstall = "/ssd/Steam/steamapps/common/ULTRAKILL" # The path to your ULTRAKILL install
@@ -45,7 +49,6 @@ $installExitCode = $LASTEXITCODE
 Write-Output "`n- Cleaning up"
 
 Remove-Item -Recurse -Force ./ULTRAINTERFACE/Package/contentFiles/ -ErrorAction 'SilentlyContinue'
-Remove-Item -Force ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -ErrorAction 'SilentlyContinue'
 
 if ($packExitCode -ne 0 -or $installExitCode -ne 0) {
 	$Host.UI.RawUI.ForegroundColor = "Red"
@@ -77,7 +80,12 @@ $doc.Save("./ExampleUI/NuGet.Config") | Out-Null
 
 Write-Output "- Building Example Mod: `n"
 
-dotnet build ./ExampleUI/ExampleUI.csproj
+if ($Release) {
+	dotnet publish ./ExampleUI/ExampleUI.csproj -c Release -r win-x64
+} else {
+	dotnet build ./ExampleUI/ExampleUI.csproj -r win-x64
+}
+
 $buildExitCode = $LASTEXITCODE
 
 Write-Output "`n- Reverting changes to NuGet.Config"
@@ -98,7 +106,11 @@ if (!(Test-Path $UltrakillInstall)) {
 	$Host.UI.RawUI.ForegroundColor = $OriginalColor
 } else {
 	Write-Output "- Copying Example Mod to Scripts Folder"
-	cp ./ExampleUI/bin/Debug/net471/ExampleUI.dll $UltrakillInstall/BepInEx/scripts
+	if ($Release) {
+		Copy-Item ./ExampleUI/bin/Release/net471/win-x64/publish/ExampleUI.dll $UltrakillInstall/BepInEx/scripts
+	} else {
+		Copy-Item ./ExampleUI/bin/Debug/net471/win-x64/ExampleUI.dll $UltrakillInstall/BepInEx/scripts
+	}
 }
 
 if ($buildExitCode -ne 0) {
