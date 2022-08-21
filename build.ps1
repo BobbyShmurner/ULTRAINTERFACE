@@ -30,6 +30,7 @@ if (!$OnlyBuildMod) {
 
 	New-Item ./ULTRAINTERFACE/Package/contentFiles/any/any/resources/ -ItemType Directory | Out-Null
 	New-Item ./ULTRAINTERFACE/Package/contentFiles/any/any/src/ -ItemType Directory | Out-Null
+	New-Item ../ULTRAINTERFACE/resources/ -ItemType Directory | Out-Null
 
 	if (Test-Path "./UnityProject/build.lock") {
 		Write-Output "`n-- Waiting for Asset Bundles to build --`n"
