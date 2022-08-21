@@ -1,6 +1,8 @@
 bin/
 obj/
 
+ULTRAINTERFACE/resources/ultrainterface
+
 LocalNuGetSource/
 **/contentFiles/*
 *.nupkg

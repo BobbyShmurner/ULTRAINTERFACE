@@ -58,10 +58,7 @@ if (!$OnlyBuildMod) {
 	Write-Output "`n- Cleaning up"
 
 	Remove-Item -Recurse -Force ./ULTRAINTERFACE/Package/contentFiles/ -ErrorAction 'SilentlyContinue'
-
-	if (!$OnlyBuildPackage) {
-
-	}
+	Remove-Item -Force ./ULTRAINTERFACE/resources/ultrainterface -ErrorAction 'SilentlyContinue'
 
 	if ($packExitCode -ne 0 -or $installExitCode -ne 0) {
 		$Host.UI.RawUI.ForegroundColor = "Red"
