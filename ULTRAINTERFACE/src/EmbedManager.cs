@@ -31,6 +31,11 @@ namespace ULTRAINTERFACE {
 			return texture;
 		}
 
+		public static Sprite CreateSpriteFromEmbeddedTexture(string resourceName) {
+			Texture2D texture = LoadEmbeddedTexture(resourceName);
+			return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+		}
+
 		public static void LoadEmbeddedFile(string resourceName, Action<StreamReader> action) {
 			if (!UI.Init()) return;
 
