@@ -20,6 +20,8 @@ namespace ULTRAINTERFACE {
 		public bool IsInitalised { get; private set; } = false;
 		public bool HasBeenShown { get; private set; } = false;
 
+		public static implicit operator RectTransform(OptionsMenu menu) => menu.Content;
+
 		float previousHeight;
 
 		public void ScrollToTop(bool includeChildren = true) {

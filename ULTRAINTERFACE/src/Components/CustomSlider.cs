@@ -9,6 +9,8 @@ namespace ULTRAINTERFACE {
 		public SliderSettings SliderSettings { get; private set; }
 		public SliderValueToText SliderValueToText { get; private set; }
 
+		public static implicit operator Slider(CustomSlider slider) => slider.Slider;
+
 		internal void Init(Slider slider, Text label, Text value, SliderSettings settings) {
 			Slider = slider;
 			Label = label;

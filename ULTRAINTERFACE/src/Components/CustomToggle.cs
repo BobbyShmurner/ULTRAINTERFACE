@@ -7,6 +7,8 @@ namespace ULTRAINTERFACE {
 		public Image Checkmark { get; private set; }
 		public Image Background { get; private set; }
 
+		public static implicit operator Toggle(CustomToggle toggle) => toggle.Toggle;
+
 		internal void Init(Toggle toggle, Text label, Image background, Image checkmark) {
 			Toggle = toggle;
 			Label = label;

@@ -35,7 +35,7 @@ namespace ULTRAINTERFACE {
 			if (buttonText == "") buttonText = title;
 
 			CustomScrollView scrollView = UI.CreateScrollView(OptionsMenu, 620, 520, 20, TextAnchor.MiddleCenter, CultureInfo.InvariantCulture.TextInfo.ToTitleCase(title.ToLower()) + " Options");
-			CustomButton optionsButton = UI.CreateButton(OptionsScroll.Content, title, 14, 160, 50);
+			CustomButton optionsButton = UI.CreateButton(OptionsScroll, title, 14, 160, 50);
 
 			RectTransform scrollViewRect = scrollView.GetComponent<RectTransform>();
 			scrollViewRect.anchoredPosition = new Vector2(12.5f, -50);
@@ -50,8 +50,8 @@ namespace ULTRAINTERFACE {
 			contentLayout.childControlWidth = true;
 
 			// Disable this menu when the other buttons are clicked
-			for (int i = 0; i < OptionsScroll.Content.transform.childCount; i++) {
-				Button button = OptionsScroll.Content.transform.GetChild(i).GetComponent<Button>();
+			for (int i = 0; i < OptionsScroll.Content.childCount; i++) {
+				Button button = OptionsScroll.Content.GetChild(i).GetComponent<Button>();
 				if (button == null || button == optionsButton.Button) continue;
 				
 				button.onClick.AddListener(() => { scrollView.gameObject.SetActive(false); });
@@ -84,7 +84,7 @@ namespace ULTRAINTERFACE {
 			optionsMenu.Init(scrollView, optionsButton, titleText);
 
 			optionsMenu.LateCreate.Add((menu) => {
-				Selectable firstSelectable = menu.ScrollView.Content.GetComponentInChildren<Selectable>();
+				Selectable firstSelectable = menu.Content.GetComponentInChildren<Selectable>();
 				typeof(GamepadObjectSelector).GetField("mainTarget", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(menu.ScrollView.GetComponent<GamepadObjectSelector>(), firstSelectable ? firstSelectable.gameObject : null);
 			});
 
