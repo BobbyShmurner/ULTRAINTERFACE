@@ -293,6 +293,28 @@ namespace ULTRAINTERFACE {
 			return customPanel;
 		}
 
+		public static CustomImage CreateImage(Transform parent, Sprite sprite, float width = -1, float height = -1, string name = "Custom Image") {
+			if (!Init()) return null;
+
+			RectTransform imageRect = new GameObject(name).AddComponent<RectTransform>();
+			imageRect.SetParent(parent, false);
+
+			Image image = imageRect.gameObject.AddComponent<Image>();
+			
+			CustomImage customImage = imageRect.gameObject.AddComponent<CustomImage>();
+			customImage.Init(image);
+			customImage.SetSprite(sprite, false);
+
+			if (sprite != null) {
+				if (width == -1) width = sprite.bounds.size.x;
+				if (height == -1) height = sprite.bounds.size.y;
+
+				customImage.SetDimensions(width, height);
+			}
+
+			return customImage;
+		}
+
 		public static void Unload() {
 			SceneManager.sceneLoaded -= OnSceneLoad;
 			OnSceneLoadActions.Clear();
@@ -314,12 +336,12 @@ namespace ULTRAINTERFACE {
 
 				HasInitalisedBefore = true;
 
-				EmbedManager.CurrentAssembly = Assembly.GetExecutingAssembly();
-				string resourceName = EmbedManager.CurrentAssembly.GetManifestResourceNames().First((name) => name.EndsWith("resources.ultrainterface"));
-				Stream resourceStream = EmbedManager.CurrentAssembly.GetManifestResourceStream(resourceName);
+				AssetLoader.CurrentAssembly = Assembly.GetExecutingAssembly();
+				string resourceName = AssetLoader.CurrentAssembly.GetManifestResourceNames().First((name) => name.EndsWith("resources.ultrainterface"));
+				Stream resourceStream = AssetLoader.CurrentAssembly.GetManifestResourceStream(resourceName);
 				var bundle = AssetBundle.LoadFromStream(resourceStream);
 
-				EmbedManager.ResourceNamespace = resourceName.Replace(".resources.ultrainterface", "");
+				AssetLoader.ResourceNamespace = resourceName.Replace(".resources.ultrainterface", "");
 
 				ScrollViewPrefab = bundle.LoadAsset<GameObject>("ScrollViewPrefab");
 				ButtonPrefab = bundle.LoadAsset<GameObject>("ButtonPrefab");
@@ -328,7 +350,7 @@ namespace ULTRAINTERFACE {
 				PanelPrefab = bundle.LoadAsset<GameObject>("PanelPrefab");
 				TextPrefab = bundle.LoadAsset<GameObject>("TextPrefab");
 
-				HarmonyInstance = new Harmony($"ULTRAINTERFACE-{EmbedManager.CurrentAssembly.GetName().Name}");
+				HarmonyInstance = new Harmony($"ULTRAINTERFACE-{AssetLoader.CurrentAssembly.GetName().Name}");
 				HarmonyInstance.PatchAll(typeof(SliderValueToTextPatch));
 
 				resourceStream.Close();
