@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace ULTRAINTERFACE {
-	// We don't inherit from ModObject because this will be attached to the Main Camera
-	public class CoroManager : MonoBehaviour {
+	[DontDestroyGameObjectOnUnload]
+	public class CoroManager : ModObject {
 		public static CoroManager Instance { get; private set; } = null;
 
 		List<Action> updateActions = new List<Action>();

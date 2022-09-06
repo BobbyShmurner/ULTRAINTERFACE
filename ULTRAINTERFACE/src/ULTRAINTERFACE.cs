@@ -323,7 +323,11 @@ namespace ULTRAINTERFACE {
 			HarmonyInstance.UnpatchSelf();
 
 			foreach (ModObject ui in Resources.FindObjectsOfTypeAll<ModObject>()) {
-				GameObject.Destroy(ui.gameObject);
+				Attribute[] attrs = Attribute.GetCustomAttributes(ui.GetType());
+				bool shouldDestroyGameObject = !attrs.ToList().Exists((attr) => attr is DontDestroyGameObjectOnUnloadAttribute);
+
+				if (shouldDestroyGameObject) GameObject.Destroy(ui.gameObject);
+				else GameObject.Destroy(ui);
 			}
 		}
 

@@ -42,33 +42,33 @@ namespace ULTRAINTERFACE {
 			return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
 		}
 
-		public static Sprite CreateSpriteFromFileDialog(string initialDirectory = "", bool restoreDirectory = true) {
-			string path;
-			return CreateSpriteFromFileDialog(out path, initialDirectory, restoreDirectory);
-		}
+		// public static Sprite CreateSpriteFromFileDialog(string initialDirectory = "", bool restoreDirectory = true) {
+		// 	string path;
+		// 	return CreateSpriteFromFileDialog(out path, initialDirectory, restoreDirectory);
+		// }
 
-		public static Sprite CreateSpriteFromFileDialog(out string path, string initialDirectory = "", bool restoreDirectory = true) {
-			Texture2D texture = LoadTextureFromFileDialog(out path, initialDirectory, restoreDirectory);
-			if (texture == null) return null;
+		// public static Sprite CreateSpriteFromFileDialog(out string path, string initialDirectory = "", bool restoreDirectory = true) {
+		// 	Texture2D texture = LoadTextureFromFileDialog(out path, initialDirectory, restoreDirectory);
+		// 	if (texture == null) return null;
 
-			return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-		}
+		// 	return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+		// }
 
-		public static Texture2D LoadTextureFromFileDialog(string initialDirectory = "", bool restoreDirectory = true) {
-			string path;
-			return LoadTextureFromFileDialog(out path, initialDirectory, restoreDirectory);
-		}
+		// public static Texture2D LoadTextureFromFileDialog(string initialDirectory = "", bool restoreDirectory = true) {
+		// 	string path;
+		// 	return LoadTextureFromFileDialog(out path, initialDirectory, restoreDirectory);
+		// }
 
-		public static Texture2D LoadTextureFromFileDialog(out string path, string initialDirectory = "", bool restoreDirectory = true) {
-			if (initialDirectory == "") initialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+		// public static Texture2D LoadTextureFromFileDialog(out string path, string initialDirectory = "", bool restoreDirectory = true) {
+		// 	if (initialDirectory == "") initialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
-			Texture2D texture = null;
-			FileManager.LoadFileFromFileDialog((reader) => {
-				texture = LoadTextureInternal(reader.BaseStream, true);
-			}, out path, initialDirectory, "Images: (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg", restoreDirectory);
+		// 	Texture2D texture = null;
+		// 	FileManager.LoadFileFromFileDialog((reader) => {
+		// 		texture = LoadTextureInternal(reader.BaseStream, true);
+		// 	}, out path, initialDirectory, "Images: (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg", restoreDirectory);
 
-			return texture;
-		}
+		// 	return texture;
+		// }
 
 		public static void LoadEmbeddedFile(string resourceName, Action<StreamReader> action) {
 			if (!UI.Init()) return;
