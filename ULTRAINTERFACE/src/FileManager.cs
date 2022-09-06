@@ -1,13 +1,9 @@
 using System;
 using System.IO;
-using System.Windows.Forms;
 using System.Runtime.InteropServices;
 
 namespace ULTRAINTERFACE {
 	public static class FileManager {
-		[DllImport("user32.dll")]
-		private static extern void OpenFileDialog();
-
 		public static void LoadFileFromDisk(string path, Action<StreamReader> action) {
 			if (!UI.Init()) return;
 
@@ -29,24 +25,36 @@ namespace ULTRAINTERFACE {
 			resourceStream.Close();
 		}
 
-		public static void LoadFileFromFileDialog(Action<StreamReader> action, string initialDirectory = "", string filter = "All files (*.*)|*.*", bool restoreDirectory = true) {
-			string path;
-			LoadFileFromFileDialog(action, out path, initialDirectory, filter, restoreDirectory);
-		}
+		// public static void LoadFileFromFileDialog(Action<StreamReader> action, string initialDirectory = "", string filter = "All files (*.*)|*.*", bool restoreDirectory = true) {
+		// 	string path;
+		// 	LoadFileFromFileDialog(action, out path, initialDirectory, filter, restoreDirectory);
+		// }
 
-		public static void LoadFileFromFileDialog(Action<StreamReader> action, out string path, string initialDirectory = "", string filter = "All files (*.*)|*.*", bool restoreDirectory = true) {
-			if (initialDirectory == "") initialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-			path = "";
+		// public static void LoadFileFromFileDialog(Action<StreamReader> action, out string path, string initialDirectory = "", string filter = "All files (*.*)|*.*", bool restoreDirectory = true) {
+		// 	if (initialDirectory == "") initialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+		// 	path = "";
 
-			OpenFileDialog openFileDialog = new OpenFileDialog();
-			openFileDialog.InitialDirectory = initialDirectory;
-			openFileDialog.Filter = filter;
-			openFileDialog.RestoreDirectory = restoreDirectory;
+		// 	// --- UNMANAGED CODE WARNING!!!! ---
 
-			if (openFileDialog.ShowDialog() != DialogResult.OK) return;
-			path = openFileDialog.FileName;
+		// 	unsafe {
+		// 		int hr = UnmanagedFunctions.CoInitializeEx(IntPtr.Zero, COINIT.COINIT_APARTMENTTHREADED | COINIT.COINIT_DISABLE_OLE1DDE);
+		// 		if (hr < 0) return;
 
-			LoadFileFromDisk(path, action);
-		}
+		// 		Guid CLSID_FileOpenDialog = new Guid("DC1C5A9C-E88A-4dde-A5A1-60F82A20AEF7");
+		// 		Guid IID_IFileOpenDialog = new Guid("d57c7288-d4ad-4768-be02-9d969532d960");
+		// 		Guid IID_IUnknown = new Guid("00000000-0000-0000-C000-000000000046");
+
+		// 		IntPtr pFileOpen;
+
+		// 		uint returnVal = UnmanagedFunctions.CoCreateInstance(ref CLSID_FileOpenDialog, IntPtr.Zero, (uint)(CLSCTX.CLSCTX_INPROC_SERVER | CLSCTX.CLSCTX_LOCAL_SERVER | CLSCTX.CLSCTX_REMOTE_SERVER), ref IID_IUnknown, &pFileOpen);
+
+		// 		UI.Log.LogInfo($"pFileOpen: {pFileOpen}");
+		// 		UI.Log.LogInfo($"Marshaled Type: {Marshal.GetObjectForIUnknown(pFileOpen)}");
+
+		// 		UnmanagedFunctions.CoUninitialize();
+		// 	}
+
+		// 	LoadFileFromDisk(path, action);
+		// }
 	}
 }

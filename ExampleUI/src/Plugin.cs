@@ -52,6 +52,8 @@ namespace ExampleUI
 
             Log.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
 
+            AssetLoader.CreateSpriteFromFileDialog();
+
             int openCountSinceGameStart = 0;
             Options.CreateOptionsMenu("Super cool settings", (menu) => {
                 var gabrielPanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
