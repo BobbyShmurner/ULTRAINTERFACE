@@ -6,15 +6,22 @@ param (
 	[Switch] $OnlyBuildMod
 )
 
-# ---- Config ---- #
+. ./config.ps1
 
-$UltrakillInstall = "C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL" # The path to your ULTRAKILL install
-$LocalNuGetSource = "./LocalNuGetSource" # Where to store your local nuget cache (for some reason this is also required on top of the nuget cache)
-
-# -- End Config -- #
-
-$NuGetPackageCache = ((nuget locals global-packages -list) -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
 $OriginalColor = $Host.UI.RawUI.ForegroundColor
+
+$NuGetTest = Get-Command "nuget" -ErrorAction 'SilentlyContinue'
+
+if ($NuGetTest.Length -eq 0) {
+	$Host.UI.RawUI.ForegroundColor = "Red"
+	Write-Output "NuGet Not Found!`n`nFailed to run `"$NuGetPath`"`nPlease download NuGet and ensure it has been added to PATH, or that you've specified the correct path in the `"config.ps1`" script"
+	Write-Output "`n-- Build FAILED! --"
+	$Host.UI.RawUI.ForegroundColor = $OriginalColor
+
+	exit 1
+}
+
+$NuGetPackageCache = ((.$NuGetPath locals global-packages -list) -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
 
 Write-Output "- Removing Files"
 
@@ -46,11 +53,11 @@ if (!$OnlyBuildMod) {
 
 	Write-Output "- Creating and Installing NuGet Package: `n"
 
-	nuget pack ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nuspec -OutputDirectory ./ULTRAINTERFACE/Package/ -OutputFileNamesWithoutVersion
+	. $NuGetPath pack ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nuspec -OutputDirectory ./ULTRAINTERFACE/Package/ -OutputFileNamesWithoutVersion
 	$packExitCode = $LASTEXITCODE
 
 	if (!$DontInstallLocally) {
-		nuget add ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source $LocalNuGetSource
+		. $NuGetPath add ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source $LocalNuGetSource
 		$installExitCode = $LASTEXITCODE
 	} else {
 		$installExitCode = 0
@@ -119,7 +126,7 @@ if (!$OnlyBuildPackage) {
 		$Host.UI.RawUI.ForegroundColor = "Red"
 		Write-Output "`n- Could not find ULTRAKILL install at `"$UltrakillInstall`"!"
 		Write-Output "- Cannot copy the ExampleUI mod to the scripts folder"
-		Write-Output "- Please specify the correct path at the top of this script to allow for auto-install of the mod"
+		Write-Output "- Please specify the correct path in the `"config.ps1`" script to allow for auto-install of the mod"
 		$Host.UI.RawUI.ForegroundColor = $OriginalColor
 	} else {
 		New-Item $UltrakillInstall/BepInEx/scripts -ItemType Directory -ErrorAction 'SilentlyContinue' | Out-Null
