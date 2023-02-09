@@ -11,8 +11,8 @@ namespace ULTRAINTERFACE {
 			Image = image;
 		}
 
-		public void SetTransparency(float transparency) {
-			Image.color = new Color(Image.color.r, Image.color.g, Image.color.b, transparency);
+		public void SetOpacity(float opacity) {
+			Image.color = new Color(Image.color.r, Image.color.g, Image.color.b, opacity);
 		}
 
 		public void SetColor(Color color) {

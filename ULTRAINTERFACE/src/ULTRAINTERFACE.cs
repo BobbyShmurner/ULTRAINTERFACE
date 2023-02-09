@@ -10,7 +10,6 @@ using UnityEngine.SceneManagement;
 using System;
 using System.IO;
 using System.Linq;
-using System.Globalization;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -18,6 +17,7 @@ namespace ULTRAINTERFACE {
 	public static class UI {
 		public static List<Action<Scene>> OnSceneLoadActions { get; private set; } = new List<Action<Scene>>();
 		public static ManualLogSource Log { get; private set; }
+		public static Canvas Canvas;
 
 		internal static Harmony HarmonyInstance;
 
@@ -26,6 +26,7 @@ namespace ULTRAINTERFACE {
 		internal static GameObject TogglePrefab;
 		internal static GameObject SliderPrefab;
 		internal static GameObject PanelPrefab;
+		internal static GameObject ModalPrefab;
 		internal static GameObject TextPrefab;
 
 		static bool IsUISetup = false;
@@ -44,14 +45,13 @@ namespace ULTRAINTERFACE {
 			}
 		}
 
-		public static RectTransform CreateHorizontalLayoutGroup(Transform parent, float width = 500, float height = 20, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter, RectOffset padding = null) {
+		public static RectTransform CreateHorizontalLayoutGroup(Transform parent, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter, RectOffset padding = null) {
 			if (padding == null) padding = new RectOffset(0, 0, 0, 0);
 			
 			HorizontalLayoutGroup layout = new GameObject("Horizontal Layout Group").AddComponent<HorizontalLayoutGroup>();
 			layout.gameObject.AddComponent<UIComponent>();
 
 			RectTransform layoutRect = layout.GetComponent<RectTransform>();
-			layoutRect.sizeDelta = new Vector2(width, height);
 			layoutRect.SetParent(parent, false);
 
 			layout.childAlignment = childAlignment;
@@ -63,18 +63,18 @@ namespace ULTRAINTERFACE {
 
 			ContentSizeFitter sizeFitter = layout.gameObject.AddComponent<ContentSizeFitter>();
 			sizeFitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
+			sizeFitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
 
 			return layoutRect;
 		}
 
-		public static RectTransform CreateVerticalLayoutGroup(Transform parent, float width = 20, float height = 500, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter, RectOffset padding = null) {
+		public static RectTransform CreateVerticalLayoutGroup(Transform parent, int spacing = 20, TextAnchor childAlignment = TextAnchor.MiddleCenter, RectOffset padding = null) {
 			if (padding == null) padding = new RectOffset(0, 0, 0, 0);
 			
 			VerticalLayoutGroup layout = new GameObject("Vertical Layout Group").AddComponent<VerticalLayoutGroup>();
 			layout.gameObject.AddComponent<UIComponent>();
 
 			RectTransform layoutRect = layout.GetComponent<RectTransform>();
-			layoutRect.sizeDelta = new Vector2(width, height);
 			layoutRect.SetParent(parent, false);
 
 			layout.childAlignment = childAlignment;
@@ -85,6 +85,7 @@ namespace ULTRAINTERFACE {
 			layout.spacing = spacing;
 
 			ContentSizeFitter sizeFitter = layout.gameObject.AddComponent<ContentSizeFitter>();
+			sizeFitter.horizontalFit = ContentSizeFitter.FitMode.MinSize;
 			sizeFitter.verticalFit = ContentSizeFitter.FitMode.MinSize;
 
 			return layoutRect;
@@ -134,6 +135,44 @@ namespace ULTRAINTERFACE {
 			customButton.Init(button, buttonText);
 
 			return customButton;
+		}
+
+		public static CustomModal CreateModal(Action<CustomModal> onCreate, bool showOutline = true, bool blockRaycasts = true, float backgroundOpacity = 1, float raycastScreenOpacity = 0.5f, string name = "Custom Modal") {
+			CustomModal modal = CreateModal(showOutline, blockRaycasts, backgroundOpacity, raycastScreenOpacity, name);
+			onCreate(modal);
+
+			return modal;
+		}
+
+		public static CustomModal CreateModal(bool showOutline = true, bool blockRaycasts = true, float backgroundOpacity = 1, float raycastScreenOpacity = 0.5f, string name = "Custom Modal") {
+			if (!Init()) return null;
+
+			GameObject modalGO = GameObject.Instantiate(ModalPrefab, UI.Canvas.transform);
+			modalGO.name = name;
+
+			RectTransform content = (RectTransform)modalGO.transform.GetChild(1).GetChild(1);
+			Image outline = modalGO.transform.GetChild(1).GetChild(0).GetComponent<Image>();
+			Image raycastScreen = modalGO.transform.GetChild(0).GetComponent<Image>();
+			Image background = modalGO.transform.GetChild(1).GetComponent<Image>();
+
+			CopyRectSize copyRectSize = content.parent.gameObject.AddComponent<CopyRectSize>();
+			copyRectSize.TargetRect = content;
+
+			CustomModal customModal = modalGO.AddComponent<CustomModal>();
+			customModal.Init(content, raycastScreen, background, outline, modalGO.GetComponent<GamepadObjectSelector>(), modalGO.GetComponent<MenuEsc>());
+
+			customModal.SetRaycastScreenOpacity(raycastScreenOpacity);
+			customModal.SetBackgroundOpacity(backgroundOpacity);
+			customModal.SetRaycastScreenActive(blockRaycasts);
+			customModal.SetOutlineActive(showOutline);
+
+			customModal.OnShown.Add((modal) => {
+				modal.SetFirstSelectable();
+				modal.GamepadObjectSelector.Activate();
+				modal.GamepadObjectSelector.SetTop();
+			});
+
+			return customModal;
 		}
 
 		public static CustomToggle CreateToggle(Transform parent, string label, UnityAction<bool> onValueChanged) {
@@ -273,7 +312,7 @@ namespace ULTRAINTERFACE {
 			return customSlider;
 		}
 
-		public static CustomPanel CreatePanel(Transform parent, TextAnchor childAlignment = TextAnchor.MiddleLeft, float spacing = 20, float transparency = 1, RectOffset padding = null, string name = "Custom Panel") {
+		public static CustomPanel CreatePanel(Transform parent, TextAnchor childAlignment = TextAnchor.MiddleLeft, float spacing = 20, float opacity = 1, RectOffset padding = null, string name = "Custom Panel") {
 			if (!Init()) return null;
 			if (padding == null) padding = new RectOffset(20, 20, 15, 15);
 
@@ -285,7 +324,7 @@ namespace ULTRAINTERFACE {
 			layoutGroup.spacing = spacing;
 
 			Image image = panel.GetComponent<Image>();
-			image.color = new Color(0, 0, 0, transparency);
+			image.color = new Color(0, 0, 0, opacity);
 
 			CustomPanel customPanel = panel.gameObject.AddComponent<CustomPanel>();
 			customPanel.Init(image);
@@ -352,6 +391,7 @@ namespace ULTRAINTERFACE {
 				TogglePrefab = bundle.LoadAsset<GameObject>("TogglePrefab");
 				SliderPrefab = bundle.LoadAsset<GameObject>("SliderPrefab");
 				PanelPrefab = bundle.LoadAsset<GameObject>("PanelPrefab");
+				ModalPrefab = bundle.LoadAsset<GameObject>("ModalPrefab");
 				TextPrefab = bundle.LoadAsset<GameObject>("TextPrefab");
 
 				HarmonyInstance = new Harmony($"ULTRAINTERFACE-{AssetLoader.CurrentAssembly.GetName().Name}");
@@ -387,7 +427,13 @@ namespace ULTRAINTERFACE {
 		static bool SetupUI() {
 			if (IsUISetup) return true;
 
-			Camera.main.gameObject.AddComponent<CoroManager>();
+			try {
+				Camera.main.gameObject.AddComponent<CoroManager>();
+				Canvas = GameObject.FindObjectOfType<OptionsMenuToManager>().GetComponent<Canvas>();
+			} catch(Exception e) {
+				Log.LogError($"Failed to Initalise UI!\n\n{e}");
+				return false;
+			}
 
 			Log.LogInfo($"Initalised UI");
 			return true;

@@ -4,67 +4,73 @@ using System.Collections.Generic;
 
 using UnityEngine;
 
-namespace ULTRAINTERFACE {
-	[DontDestroyGameObjectOnUnload]
-	public class CoroManager : ModObject {
-		public static CoroManager Instance { get; private set; } = null;
+public class CoroManager : MonoBehaviour {
+	public static CoroManager Instance { get; private set; } = null;
 
-		List<Action> updateActions = new List<Action>();
-		List<Action> lateUpdateActions = new List<Action>();
-		List<Action> preRenderActions = new List<Action>();
+	List<Action> updateActions = new List<Action>();
+	List<Action> lateUpdateActions = new List<Action>();
+	List<Action> preRenderActions = new List<Action>();
 
-		public static void InvokeNextLateUpdate(Action action) {
-			Instance.lateUpdateActions.Add(action);
+	public static void InvokeNextLateUpdate(Action action) {
+		Instance.lateUpdateActions.Add(action);
+	}
+
+	public static void InvokeNextUpdate(Action action) {
+		Instance.updateActions.Add(action);
+	}
+
+	public static void InvokeBeforeRender(Action action) {
+		Instance.preRenderActions.Add(action);
+	}
+
+	public static void InvokeNextFrame(Action action) {
+		Instance.StartCoroutine(InvokeNextFrameCoro(action));
+	}
+
+	public static void InvokeAfterSeconds(float seconds, Action action) {
+		Instance.StartCoroutine(InvokeAfterSecondsCoro(action, seconds));
+	}
+
+	public static IEnumerator InvokeNextFrameCoro(Action action) {
+		yield return null;
+		action();
+	}
+
+	public static IEnumerator InvokeAfterSecondsCoro(Action action, float seconds) {
+		yield return new WaitForSecondsRealtime(seconds);
+		action();
+	}
+
+	void Awake() {
+		if (Instance != null) {
+			Destroy(this);
+			return;
 		}
 
-		public static void InvokeNextUpdate(Action action) {
-			Instance.updateActions.Add(action);
-		}
+		Instance = this;
+	}
 
-		public static void InvokeBeforeRender(Action action) {
-			Instance.preRenderActions.Add(action);
-		}
-
-		public static void InvokeNextFrame(Action action) {
-			Instance.StartCoroutine(InvokeNextFrameCoro(action));
-		}
-
-		public static IEnumerator InvokeNextFrameCoro(Action action) {
-			yield return null;
+	void LateUpdate() {
+		foreach (Action action in lateUpdateActions) {
 			action();
 		}
 
-		void Awake() {
-			if (Instance != null) {
-				Destroy(this);
-				return;
-			}
+		lateUpdateActions.Clear();
+	}
 
-			Instance = this;
+	void OnPreCull() {
+		foreach (Action action in preRenderActions) {
+			action();
 		}
 
-		void LateUpdate() {
-			foreach (Action action in lateUpdateActions) {
-				action();
-			}
+		preRenderActions.Clear();
+	}
 
-			lateUpdateActions.Clear();
+	void Update() {
+		foreach (Action action in updateActions) {
+			action();
 		}
 
-		void OnPreCull() {
-			foreach (Action action in preRenderActions) {
-				action();
-			}
-
-			preRenderActions.Clear();
-		}
-
-		void Update() {
-			foreach (Action action in updateActions) {
-				action();
-			}
-
-			updateActions.Clear();
-		}
+		updateActions.Clear();
 	}
 }

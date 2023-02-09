@@ -26,8 +26,8 @@ namespace ULTRAINTERFACE {
 			SetDimensions(Sprite.texture.width, Sprite.texture.height);
 		}
 
-		public void SetTransparency(float transparency) {
-			Image.color = new Color(Image.color.r, Image.color.g, Image.color.b, transparency);
+		public void SetOpacity(float opacity) {
+			Image.color = new Color(Image.color.r, Image.color.g, Image.color.b, opacity);
 		}
 
 		public void SetColor(Color color) {

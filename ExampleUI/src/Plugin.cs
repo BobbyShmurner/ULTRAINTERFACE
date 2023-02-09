@@ -52,15 +52,11 @@ namespace ExampleUI
 
             Log.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
 
-            foreach (var name in AssetLoader.CurrentAssembly.GetManifestResourceNames()) {
-                Log.LogInfo(name);
-            }
-
             int openCountSinceGameStart = 0;
             Options.CreateOptionsMenu("Super cool settings", (menu) => {
                 var gabrielPanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
                 
-                CustomText gamingText = UI.CreateText(gabrielPanel, "<size=50>stfu bozo</size>\n\nim gaming", 24, 520, 75);
+                CustomText gamingText = UI.CreateText(gabrielPanel, "<size=50>stfu bozo</size>\n\nim gaming", width: 520, height: 75);
                 
                 UI.CreateButton(gabrielPanel, "Super Cool Button", () => {
                     gamingText.SetText("<size=50>stfu bozo</size>\n\nim gabriel gaming");
@@ -112,7 +108,7 @@ namespace ExampleUI
                 var inlinePanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
 
                 UI.CreateText(inlinePanel, "Woah, multiple toggles on one line???");
-                var inlineTogglesGroup = UI.CreateHorizontalLayoutGroup(inlinePanel, 440, 20, 75);
+                var inlineTogglesGroup = UI.CreateHorizontalLayoutGroup(inlinePanel, spacing: 75);
 
                 UI.CreateToggle(inlineTogglesGroup, "Uno", 100);
                 UI.CreateToggle(inlineTogglesGroup, "Dos", 100);
@@ -120,27 +116,103 @@ namespace ExampleUI
 
                 menu.AddButton("Press to die ;)", () => {
                     MonoSingleton<OptionsManager>.Instance.UnPause();
+                    MonoSingleton<NewMovement>.Instance.GetHurt(10000, false, 1, true);
 
-                    SpawnableObjectsDatabase database = (SpawnableObjectsDatabase)typeof(SandboxSaver).GetField("objects", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(Resources.FindObjectsOfTypeAll<SandboxSaver>()[0]);
-                    GameObject maurice = database.enemies[12].gameObject;
+                    // SpawnableObjectsDatabase database = (SpawnableObjectsDatabase)typeof(SandboxSaver).GetField("objects", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(Resources.FindObjectsOfTypeAll<SandboxSaver>()[0]);
+                    // GameObject maurice = database.enemies[12].gameObject;
 
-                    NewMovement v1 = Camera.main.GetComponentsInParent<NewMovement>()[0];
-                    CoroManager.InvokeNextFrame(() => v1.GetHurt(10000, false, 1, true));
+                    // NewMovement player = MonoSingleton<NewMovement>.Instance;
+                    // CoroManager.InvokeNextFrame(() => player.GetHurt(10000, false, 1, true));
 
-                    GameObject.Instantiate(maurice.transform.GetChild(0).GetComponent<SpiderBody>().beamExplosion, v1.transform.position, Quaternion.identity);
+                    // GameObject.Instantiate(maurice/*.transform.GetChild(0).GetComponent<SpiderBody>().beamExplosion*/, player.transform.position, Quaternion.identity);
                 });
+
+                menu.AddButton("Disable UI for a bit", () => {
+					UI.Canvas.gameObject.SetActive(false);
+					CoroManager.InvokeAfterSeconds(3, () => {
+						UI.Canvas.gameObject.SetActive(true);
+					});
+				});
+
+                // This is pretty ugly, but then again, who would actually ever do this?
+                CustomModal modalStack1 = null;
+                CustomModal modalStack2 = null;
+                CustomModal modalStack3 = null;
+                CustomModal modalStack4 = null;
+                CustomModal modalStack5 = null;
+
+                modalStack1 = UI.CreateModal((modal) => {
+                    UI.CreateText(modal, "Are you sure you want\nto do this?", width: 240, height: 100);
+                    RectTransform buttonLayout = UI.CreateHorizontalLayoutGroup(modal);
+
+                    UI.CreateButton(buttonLayout, "Yes", () => {
+                        modal.Hide();
+                        modalStack2.Show();
+                    });
+
+                    UI.CreateButton(buttonLayout, "No", () => {
+                        modal.Hide();
+                    });
+                });
+
+                modalStack2 = UI.CreateModal((modal) => {
+                    UI.CreateText(modal, "No but, are you\nActually sure tho?", width: 240, height: 100);
+                    RectTransform buttonLayout = UI.CreateHorizontalLayoutGroup(modal);
+
+                    UI.CreateButton(buttonLayout, "I'm Sure", () => {
+                        modal.Hide();
+                        modalStack3.Show();
+                    });
+
+                    UI.CreateButton(buttonLayout, "On Second Thought...", () => {
+                        modal.Hide();
+                    }, width: 200);
+                });
+
+                modalStack3 = UI.CreateModal((modal) => {
+                    UI.CreateText(modal, "But when i say \"sure\"\ni mean like \"100% sure\" levels of sure", width: 500, height: 100);
+                    RectTransform buttonLayout = UI.CreateHorizontalLayoutGroup(modal);
+
+                    UI.CreateButton(buttonLayout, "Yep! 100% Sure!", () => {
+                        modal.Hide();
+                        modalStack4.Show();
+                    });
+
+                    UI.CreateButton(buttonLayout, "Yeah Maybe Not...", () => {
+                        modal.Hide();
+                    });
+                });
+
+                modalStack4 = UI.CreateModal((modal) => {
+                    UI.CreateText(modal, "<b><i><size=36>Well...</size>\n\nI tried to warn you...</i></b>", width: 300, height: 100);
+
+                    UI.CreateButton(modal, "Just show me already!", () => {
+                        modal.Hide();
+                        modalStack5.Show();
+                    }, width: 200);
+                });
+
+                modalStack5 = UI.CreateModal((modal) => {
+                    UI.CreateImage(modal, AssetLoader.CreateSpriteFromEmbeddedTexture("Maurice.png"));
+                });
+
+				menu.AddButton("Dont click this button!!!", () => {
+					modalStack1.Show();
+				});
 
                 menu.AddHeader("--Images--");
                 var imagePanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
 
-                UI.CreateImage(imagePanel, AssetLoader.CreateSpriteFromEmbeddedTexture("PANOPTICON.png"));
+                UI.CreateText(imagePanel, "Live Panopticon Reaction:", fontSize: 40);
+                UI.CreateText(imagePanel, "<color=red>SPOLIERS!!!!!!!</color>", fontSize: 60, height: 50);
+                // UI.CreateImage(imagePanel, AssetLoader.CreateSpriteFromEmbeddedTexture("PANOPTICON.png"));
 
                 menu.AddHeader("--Stats--");
                 var statsPanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
 
                 int openCountSinceLevelStart = 0;
 
-                CustomText statsText = UI.CreateText(statsPanel, "Stats :)", 24, 160, 160);
+                CustomText statsText = UI.CreateText(statsPanel, "Stats :)", height: 160);
 
                 // Reset Gabriel Gaming Text
                 menu.OnShown.Add((menu) => {

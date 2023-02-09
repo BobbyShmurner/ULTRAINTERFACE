@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 1707425303
+CRC: 4128430731
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: a3ca42079793a74db1f567e81396c31a
+    Hash: 6e1587e7afc7d6c69bc788cdd6f22ee3
   TypeTreeHash:
     serializedVersion: 2
-    Hash: b86ec2e05004c2b7428473a4d47cbee6
+    Hash: f797a1b1ad91dfdf427a9c1cf77512c9
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -34,9 +34,15 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: c17584b66ef85fa47908b35cf639a193, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: 6eb2deb711a64e442b2a29e8837922f2, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 62c9e6a87deafb74680232c2eefa1f59, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 169f0059e02cf494abfb28980e1290bd, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
 - Class: 114
@@ -55,6 +61,8 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 224
   Script: {instanceID: 0}
+- Class: 225
+  Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/BundledAssets/ultrainterface/Prefabs/SliderPrefab.prefab
@@ -65,4 +73,5 @@ Assets:
 - Assets/BundledAssets/ultrainterface/Sprites/pixelx.png
 - Assets/BundledAssets/ultrainterface/Prefabs/PanelPrefab.prefab
 - Assets/BundledAssets/ultrainterface/Prefabs/TogglePrefab.prefab
+- Assets/BundledAssets/ultrainterface/Prefabs/ModalPrefab.prefab
 Dependencies: []

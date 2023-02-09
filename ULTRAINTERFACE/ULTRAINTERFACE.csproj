@@ -27,7 +27,6 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp"/>
     <Reference Include="UnityEngine.UI"/>
-    <Reference Include="System.Windows.Forms"/>
   </ItemGroup>
 
   <PropertyGroup>
