@@ -8,7 +8,7 @@ param (
 
 # ---- Config ---- #
 
-$UltrakillInstall = "/ssd/Steam/steamapps/common/ULTRAKILL" # The path to your ULTRAKILL install
+$UltrakillInstall = "C:\Program Files (x86)\Steam\steamapps\common\ULTRAKILL" # The path to your ULTRAKILL install
 $LocalNuGetSource = "./LocalNuGetSource" # Where to store your local nuget cache (for some reason this is also required on top of the nuget cache)
 
 # -- End Config -- #
@@ -30,7 +30,7 @@ if (!$OnlyBuildMod) {
 
 	New-Item ./ULTRAINTERFACE/Package/contentFiles/any/any/resources/ -ItemType Directory | Out-Null
 	New-Item ./ULTRAINTERFACE/Package/contentFiles/any/any/src/ -ItemType Directory | Out-Null
-	New-Item ./ULTRAINTERFACE/resources/ -ItemType Directory | Out-Null
+	New-Item ./ULTRAINTERFACE/resources/ -ItemType Directory -ErrorAction 'SilentlyContinue' | Out-Null
 
 	if (Test-Path "./UnityProject/build.lock") {
 		Write-Output "`n-- Waiting for Asset Bundles to build --`n"
@@ -112,7 +112,7 @@ if (!$OnlyBuildPackage) {
 		Write-Output "- Linking NuGet Files to Source Files"
 
 		Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src/ -ErrorAction 'SilentlyContinue'
-		New-Item -ItemType SymbolicLink -Path $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src -Target (Resolve-Path ./ULTRAINTERFACE/src/) | Out-Null
+		New-Item -ItemType Junction -Path $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src -Target (Resolve-Path ./ULTRAINTERFACE/src/) -ErrorAction 'Stop' | Out-Null
 	}
 
 	if (!(Test-Path $UltrakillInstall)) {
@@ -122,6 +122,8 @@ if (!$OnlyBuildPackage) {
 		Write-Output "- Please specify the correct path at the top of this script to allow for auto-install of the mod"
 		$Host.UI.RawUI.ForegroundColor = $OriginalColor
 	} else {
+		New-Item $UltrakillInstall/BepInEx/scripts -ItemType Directory -ErrorAction 'SilentlyContinue' | Out-Null
+
 		Write-Output "- Copying Example Mod to Scripts Folder"
 		if ($Release) {
 			Copy-Item ./ExampleUI/bin/Release/net471/win-x64/publish/ExampleUI.dll $UltrakillInstall/BepInEx/scripts
