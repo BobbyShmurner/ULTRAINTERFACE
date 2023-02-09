@@ -11,27 +11,62 @@ namespace ULTRAINTERFACE {
 		public static string ResourceNamespace { get; internal set; }
 		public static Assembly CurrentAssembly { get; internal set;}
 
+		public static string GetUltrakillInstallPath() {
+			return Path.GetFullPath(UnityEngine.Application.dataPath + "/../");
+		}
+
+		public static void LoadFileFromDisk(string path, Action<StreamReader> action) {
+			if (!UI.Init()) return;
+
+			if (!File.Exists(path)) {
+				UI.Log.LogError($"File \"{path}\" does not exist");
+				return;
+			}
+
+			Stream resourceStream = File.OpenRead(path);
+			if (resourceStream == null) {
+				UI.Log.LogError($"Failed to open File \"{path}\"");
+				return;
+			}
+
+			StreamReader reader = new StreamReader(resourceStream);
+			action(reader);
+
+			reader.Close();
+			resourceStream.Close();
+		}
+
 		public static List<string> GetListOfResourceNames() {
 			return CurrentAssembly.GetManifestResourceNames().ToList();
 		}
 
 		public static Texture2D LoadEmbeddedTexture(string resourceName) {
 			if (!UI.Init()) return null;
+			Texture2D texture = null;
 
-			Stream resourceStream = CurrentAssembly.GetManifestResourceStream($"{ResourceNamespace}.{resourceName}");
-			if (resourceStream == null) {
-				UI.Log.LogError($"Failed to find Embedded Texture \"{ResourceNamespace}.{resourceName}\"");
-				return null;
-			}
+			LoadEmbeddedFile(resourceName, (reader) => {
+				texture = LoadTextureInternal(reader.BaseStream);
+			});
 
-			return LoadTextureInternal(resourceStream);
+			return texture;
 		}
 
-		internal static Texture2D LoadTextureInternal(Stream resourceStream, bool dontCloseStream = false) {
+		public static Texture2D LoadTextureFromDisk(string path) {
+			if (!UI.Init()) return null;
+			Texture2D texture = null;
+
+			LoadFileFromDisk(path, (reader) => {
+				texture = LoadTextureInternal(reader.BaseStream);
+			});
+
+			return texture;
+		}
+
+		internal static Texture2D LoadTextureInternal(Stream resourceStream) {
 			Texture2D texture = new Texture2D(2, 2);
 			texture.LoadImage(resourceStream.ToByteArray());
 
-			if (!dontCloseStream) resourceStream.Close();
+			resourceStream.Close();
 			return texture;
 		}
 
@@ -42,38 +77,18 @@ namespace ULTRAINTERFACE {
 			return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
 		}
 
-		// public static Sprite CreateSpriteFromFileDialog(string initialDirectory = "", bool restoreDirectory = true) {
-		// 	string path;
-		// 	return CreateSpriteFromFileDialog(out path, initialDirectory, restoreDirectory);
-		// }
+		public static Sprite CreateSpriteFromDisk(string path) {
+			Texture2D texture = LoadTextureFromDisk(path);
+			if (texture == null) return null;
 
-		// public static Sprite CreateSpriteFromFileDialog(out string path, string initialDirectory = "", bool restoreDirectory = true) {
-		// 	Texture2D texture = LoadTextureFromFileDialog(out path, initialDirectory, restoreDirectory);
-		// 	if (texture == null) return null;
-
-		// 	return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-		// }
-
-		// public static Texture2D LoadTextureFromFileDialog(string initialDirectory = "", bool restoreDirectory = true) {
-		// 	string path;
-		// 	return LoadTextureFromFileDialog(out path, initialDirectory, restoreDirectory);
-		// }
-
-		// public static Texture2D LoadTextureFromFileDialog(out string path, string initialDirectory = "", bool restoreDirectory = true) {
-		// 	if (initialDirectory == "") initialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
-
-		// 	Texture2D texture = null;
-		// 	FileManager.LoadFileFromFileDialog((reader) => {
-		// 		texture = LoadTextureInternal(reader.BaseStream, true);
-		// 	}, out path, initialDirectory, "Images: (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg", restoreDirectory);
-
-		// 	return texture;
-		// }
+			return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+		}
 
 		public static void LoadEmbeddedFile(string resourceName, Action<StreamReader> action) {
 			if (!UI.Init()) return;
 
 			Stream resourceStream = CurrentAssembly.GetManifestResourceStream($"{ResourceNamespace}.{resourceName}");
+			if (resourceStream == null) resourceStream = CurrentAssembly.GetManifestResourceStream($"{ResourceNamespace}.resources.{resourceName}");
 			if (resourceStream == null) {
 				UI.Log.LogError($"Failed to find Embedded File \"{ResourceNamespace}.{resourceName}\"");
 				return;
@@ -89,26 +104,22 @@ namespace ULTRAINTERFACE {
 		public static void LoadEmbeddedAssetBundle(string resourceName, Action<AssetBundle> action) {
 			if (!UI.Init()) return;
 
-			Stream resourceStream = CurrentAssembly.GetManifestResourceStream($"{ResourceNamespace}.{resourceName}");
-			if (resourceStream == null) {
-				UI.Log.LogError($"Failed to find Embedded AssetBundle \"{ResourceNamespace}.{resourceName}\"");
-				return;
-			}
-
-			LoadAssetBundleInternal(resourceStream, action);
-		}
-
-		public static void LoadAssetBundleFromDisk(string path, Action<AssetBundle> action) {
-			FileManager.LoadFileFromDisk(path, (reader) => {
-				LoadAssetBundleInternal(reader.BaseStream, action, true);
+			LoadEmbeddedFile(resourceName, (reader) => {
+				LoadAssetBundleInternal(reader.BaseStream, action);
 			});
 		}
 
-		internal static void LoadAssetBundleInternal(Stream resourceStream, Action<AssetBundle> action, bool dontCloseStream = false) {
+		public static void LoadAssetBundleFromDisk(string path, Action<AssetBundle> action) {
+			LoadFileFromDisk(path, (reader) => {
+				LoadAssetBundleInternal(reader.BaseStream, action);
+			});
+		}
+
+		internal static void LoadAssetBundleInternal(Stream resourceStream, Action<AssetBundle> action) {
 			AssetBundle bundle = AssetBundle.LoadFromStream(resourceStream);
 			action(bundle);
 
-			if (!dontCloseStream) resourceStream.Close();
+			resourceStream.Close();
 			bundle.Unload(false);
 		}
 	}

@@ -306,8 +306,8 @@ namespace ULTRAINTERFACE {
 			customImage.SetSprite(sprite, false);
 
 			if (sprite != null) {
-				if (width == -1) width = sprite.bounds.size.x;
-				if (height == -1) height = sprite.bounds.size.y;
+				if (width == -1) width = sprite.texture.width;
+				if (height == -1) height = sprite.texture.height;
 
 				customImage.SetDimensions(width, height);
 			}

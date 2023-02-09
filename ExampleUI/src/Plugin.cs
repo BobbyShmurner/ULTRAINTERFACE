@@ -52,6 +52,10 @@ namespace ExampleUI
 
             Log.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
 
+            foreach (var name in AssetLoader.CurrentAssembly.GetManifestResourceNames()) {
+                Log.LogInfo(name);
+            }
+
             int openCountSinceGameStart = 0;
             Options.CreateOptionsMenu("Super cool settings", (menu) => {
                 var gabrielPanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
@@ -126,25 +130,10 @@ namespace ExampleUI
                     GameObject.Instantiate(maurice.transform.GetChild(0).GetComponent<SpiderBody>().beamExplosion, v1.transform.position, Quaternion.identity);
                 });
 
-                // menu.AddHeader("--Custom Images--");
-                // CustomText imageDetails = null;
-                // CustomImage image = null;
+                menu.AddHeader("--Images--");
+                var imagePanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
 
-                // menu.AddButton("Load Image", () => {
-                //     string path;
-
-                //     Sprite newSprite = AssetLoader.CreateSpriteFromFileDialog(out path);
-                //     if (newSprite == null) return;
-
-                //     image.SetSprite(newSprite, true);
-                //     string fileName = Path.GetFileName(path);
-                //     imageDetails.SetText($"Image: \"{fileName}\", Size: {newSprite.texture.width}x{newSprite.texture.height}");
-                // });
-
-                // var imagePanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
-
-                // image = UI.CreateImage(imagePanel, null);
-                // imageDetails = UI.CreateText(imagePanel, "Image: None");
+                UI.CreateImage(imagePanel, AssetLoader.CreateSpriteFromEmbeddedTexture("PANOPTICON.png"));
 
                 menu.AddHeader("--Stats--");
                 var statsPanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);

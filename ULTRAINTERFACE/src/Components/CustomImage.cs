@@ -19,7 +19,11 @@ namespace ULTRAINTERFACE {
 
 		public void SetSprite(Sprite newSprite, bool setDimensions) {
 			Sprite = newSprite;
-			if (setDimensions && newSprite != null) SetDimensions(newSprite.bounds.size.x, newSprite.bounds.size.y);
+			if (setDimensions && newSprite != null) SetDimensionsToTextureSize();
+		}
+
+		public void SetDimensionsToTextureSize() {
+			SetDimensions(Sprite.texture.width, Sprite.texture.height);
 		}
 
 		public void SetTransparency(float transparency) {
