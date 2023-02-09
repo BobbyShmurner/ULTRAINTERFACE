@@ -1,6 +1,7 @@
 bin/
 obj/
 
+config.ps1
 ULTRAINTERFACE/resources/ultrainterface
 
 LocalNuGetSource/
