@@ -47,7 +47,7 @@ namespace ULTRAINTERFACE {
 			typeof(GamepadObjectSelector).GetField("mainTarget", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(GamepadObjectSelector, firstSelectable ? firstSelectable.gameObject : null);
 		}
 
-		public void Rebuild(bool updateNavigation = true) {
+		public override void Rebuild(bool updateNavigation = true) {
 			Content.Rebuild(updateNavigation);
 		}
 

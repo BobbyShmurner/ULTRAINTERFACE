@@ -21,6 +21,10 @@ namespace ULTRAINTERFACE {
 			LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
 		}
 
+		public static void ToggleActive(this GameObject go) {
+			go.SetActive(!go.activeSelf);
+		}
+
 		public static byte[] ToByteArray(this Stream stream) {
 			using (MemoryStream ms = new MemoryStream())
 			{

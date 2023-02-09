@@ -56,7 +56,7 @@ namespace ULTRAINTERFACE {
 			return UI.CreateButton(Content, text, fontSize, width, height, forceCaps);
 		}
 
-		public void Rebuild(bool updateNavigation = true) {
+		public override void Rebuild(bool updateNavigation = true) {
 			Content.Rebuild(updateNavigation);
 
 			// This is just here until the new nav system is ready

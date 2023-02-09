@@ -75,6 +75,10 @@ namespace ULTRAINTERFACE {
 			SetDimensions(RectTransform.sizeDelta.x, RectTransform.sizeDelta.y);
 		}
 
+		public virtual void Rebuild(bool updateNavigation = true) {
+			RectTransform.Rebuild(updateNavigation);
+		}
+
 		public virtual void SetHudOpenEffectActive(bool active) {
 			HudOpenEffect.enabled = active;
 		}

@@ -5,7 +5,6 @@ using BepInEx.Configuration;
 using HarmonyLib;
 
 using UnityEngine;
-using UnityEngine.UI;
 
 using ULTRAINTERFACE;
 
@@ -203,9 +202,19 @@ namespace ExampleUI
                 menu.AddHeader("--Images--");
                 var imagePanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
 
-                UI.CreateText(imagePanel, "Live Panopticon Reaction:", fontSize: 40);
-                UI.CreateText(imagePanel, "<color=red>SPOLIERS!!!!!!!</color>", fontSize: 60, height: 50);
-                // UI.CreateImage(imagePanel, AssetLoader.CreateSpriteFromEmbeddedTexture("PANOPTICON.png"));
+                CustomText spoilerText = null;
+                CustomButton spoilerButton = null;
+
+                spoilerText = UI.CreateText(imagePanel, "<color=red>P-2 SPOLIERS!!!!!!!</color>", fontSize: 54, height: 50);
+                spoilerButton = UI.CreateButton(imagePanel, "Show Me!", () => {
+                    UI.CreateText(imagePanel, "Live Panopticon Reaction:", fontSize: 40);
+                    UI.CreateImage(imagePanel, AssetLoader.CreateSpriteFromEmbeddedTexture("PANOPTICON.png"));
+
+                    spoilerText.gameObject.SetActive(false);
+                    spoilerButton.gameObject.SetActive(false);
+
+                    menu.Rebuild();
+                });
 
                 menu.AddHeader("--Stats--");
                 var statsPanel = menu.AddOptionsPanel(TextAnchor.MiddleCenter);
