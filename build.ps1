@@ -3,78 +3,125 @@ param (
 	[Switch] $DontInstallLocally,
 
 	[Switch] $OnlyBuildPackage,
-	[Switch] $OnlyBuildMod
+	[Switch] $OnlyBuildExampleMod
 )
 
 . ./config.ps1
 
 $OriginalColor = $Host.UI.RawUI.ForegroundColor
 
-$NuGetTest = Get-Command "nuget" -ErrorAction 'SilentlyContinue'
+function Write-Error {
+	param ($message)
 
-if ($NuGetTest.Length -eq 0) {
 	$Host.UI.RawUI.ForegroundColor = "Red"
-	Write-Output "NuGet Not Found!`n`nFailed to run `"$NuGetPath`"`nPlease download NuGet and ensure it has been added to PATH, or that you've specified the correct path in the `"config.ps1`" script"
-	Write-Output "`n-- Build FAILED! --"
+	Write-Output $message
 	$Host.UI.RawUI.ForegroundColor = $OriginalColor
+}
 
+function Exit-Fail {
+	Write-Error "`n-- Build FAILED! --"
 	exit 1
 }
 
-$NuGetPackageCache = ((.$NuGetPath locals global-packages -list) -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
+function Test-Nuget {
+	$NuGetTest = Get-Command "$NuGetPath" -ErrorAction 'SilentlyContinue'
 
-Write-Output "- Removing Files"
+	if ($NuGetTest.Length -eq 0) {
+		Write-Error "NuGet Not Found!`n`nFailed to run `"$NuGetPath`"`nPlease download NuGet and ensure it has been added to PATH, or that you've specified the correct path in the `"config.ps1`" script"
+		Exit-Fail
+	}
+}
 
-Remove-Item -Recurse -Force $LocalNuGetSource/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
-Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
-Remove-Item -Recurse -Force ./ULTRAINTERFACE/Package/contentFiles/ -ErrorAction 'SilentlyContinue'
+function Setup-Package-Dirs {
+	Write-Output "- Removing Files"
 
-Remove-Item -Force ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -ErrorAction 'SilentlyContinue'
-Remove-Item -Force ./ULTRAINTERFACE/resources/ultrainterface -ErrorAction 'SilentlyContinue'
+	Remove-Item -Recurse -Force $LocalNuGetSource/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
+	Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
+	Remove-Item -Recurse -Force ./ULTRAINTERFACE/Package/contentFiles/ -ErrorAction 'SilentlyContinue'
 
-if (!$OnlyBuildMod) {
+	Remove-Item -Force ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -ErrorAction 'SilentlyContinue'
+	Remove-Item -Force ./ULTRAINTERFACE/resources/ultrainterface -ErrorAction 'SilentlyContinue'
+
 	Write-Output "- Making Directories"
 
 	New-Item ./ULTRAINTERFACE/Package/contentFiles/any/any/resources/ -ItemType Directory | Out-Null
 	New-Item ./ULTRAINTERFACE/Package/contentFiles/any/any/src/ -ItemType Directory | Out-Null
 	New-Item ./ULTRAINTERFACE/resources/ -ItemType Directory -ErrorAction 'SilentlyContinue' | Out-Null
+}
 
+function Wait-For-Asset-Bundles {
 	if (Test-Path "./UnityProject/build.lock") {
 		Write-Output "`n-- Waiting for Asset Bundles to build --`n"
 
 		while (Test-Path "./UnityProject/build.lock") { Start-Sleep -Milliseconds 100 }
 	}
+}
 
-	Write-Output "- Copying Files"
+function Check-For-Asset-Bundles {
+	if (!(Test-Path "./UnityProject/Assets/StreamingAssets/ultrainterface")) {
+		Write-Error "No Asset Bundle found! Please make sure you have built the asset bundle in Unity"
+		Write-Error "The Bundle should be located at `"./UnityProject/Assets/StreamingAssets/ultrainterface`""
+		Exit-Fail
+	}
+}
+
+function Copy-Package-Files {
+	Write-Output "- Copying Package Files"
 
 	Copy-Item ./UnityProject/Assets/StreamingAssets/ultrainterface ./ULTRAINTERFACE/resources/
 	Copy-Item ./ULTRAINTERFACE/resources/* ./ULTRAINTERFACE/Package/contentFiles/any/any/resources/ -Recurse
 	Copy-Item ./ULTRAINTERFACE/src/* ./ULTRAINTERFACE/Package/contentFiles/any/any/src/ -Recurse
+}
 
-	Write-Output "- Creating and Installing NuGet Package: `n"
+function Create-Package {
+	Write-Output "- Creating NuGet Package: `n"
 
 	. $NuGetPath pack ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nuspec -OutputDirectory ./ULTRAINTERFACE/Package/ -OutputFileNamesWithoutVersion
-	$packExitCode = $LASTEXITCODE
-
-	if (!$DontInstallLocally) {
-		. $NuGetPath add ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source $LocalNuGetSource
-		$installExitCode = $LASTEXITCODE
-	} else {
-		$installExitCode = 0
+	if ($LASTEXITCODE -ne 0) {
+		Write-Error "`nFailed to pack the NuGet Package!"
+		Exit-Fail
 	}
+}
 
+function Build-Package {
+	Wait-For-Asset-Bundles
+	Check-For-Asset-Bundles
+
+	Setup-Package-Dirs
+	Copy-Package-Files
+
+	Create-Package
+}
+
+function Install-Package {
+	Write-Output "- Installing NuGet Package: `n"
+
+	. $NuGetPath add ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source $LocalNuGetSource
+	if ($LASTEXITCODE -ne 0) {
+		Write-Error "`nFailed to install the NuGet Package!"
+		Exit-Fail
+	}
+}
+
+function Clean-Up-Build {
 	Write-Output "`n- Cleaning up"
 
 	Remove-Item -Recurse -Force ./ULTRAINTERFACE/Package/contentFiles/ -ErrorAction 'SilentlyContinue'
 	Remove-Item -Force ./ULTRAINTERFACE/resources/ultrainterface -ErrorAction 'SilentlyContinue'
+}
 
-	if ($packExitCode -ne 0 -or $installExitCode -ne 0) {
-		$Host.UI.RawUI.ForegroundColor = "Red"
-		Write-Output "`n-- Build FAILED! --"
-		$Host.UI.RawUI.ForegroundColor = $OriginalColor
+Test-Nuget
 
-		exit 1
+$NuGetPackageCache = ((.$NuGetPath locals global-packages -list) -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
+
+if (!$OnlyBuildExampleMod) {
+	Build-Package
+
+	if (!$DontInstallLocally) {
+		Install-Package
 	}
+
+	Clean-Up-Build
 
 	if (!$DontInstallLocally -and !$OnlyBuildPackage) {
 		Write-Output "- Adding local source to NuGet.Config"
