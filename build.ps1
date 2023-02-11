@@ -1,14 +1,25 @@
 param (
+	[Switch] $Help,
 	[Switch] $Release,
-	[Switch] $DontInstallLocally,
+	[Switch] $DontInstall,
 
-	[Switch] $OnlyBuildPackage,
-	[Switch] $OnlyBuildExampleMod
+	[Switch] $DontBuildExampleMod,
+	[Switch] $DontBuildUltrainterface
 )
 
-. ./config.ps1
+function Write-Help {
+	Write-Output " -Release`t`tBuilds in release mode"
+	Write-Output " -DontInstall`t`tWon't install the NuGet Package or the Example mod"
+	Write-Output " -Help`t`t`tShows this message"
+}
 
-$OriginalColor = $Host.UI.RawUI.ForegroundColor
+function Write-Status {
+	param ($message)
+
+	$Host.UI.RawUI.ForegroundColor = "Cyan"
+	Write-Output $message
+	$Host.UI.RawUI.ForegroundColor = $OriginalColor
+}
 
 function Write-Error {
 	param ($message)
@@ -19,11 +30,12 @@ function Write-Error {
 }
 
 function Exit-Fail {
-	Write-Error "`n-- Build FAILED! --"
+	Write-Error "`n -- Build FAILED! --"
 	exit 1
 }
 
 function Test-Nuget {
+	Write-Status " - Testing NuGet Install"
 	$NuGetTest = Get-Command "$NuGetPath" -ErrorAction 'SilentlyContinue'
 
 	if ($NuGetTest.Length -eq 0) {
@@ -33,7 +45,7 @@ function Test-Nuget {
 }
 
 function Setup-Package-Dirs {
-	Write-Output "- Removing Files"
+	Write-Status " - Removing Files"
 
 	Remove-Item -Recurse -Force $LocalNuGetSource/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
 	Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
@@ -42,7 +54,7 @@ function Setup-Package-Dirs {
 	Remove-Item -Force ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -ErrorAction 'SilentlyContinue'
 	Remove-Item -Force ./ULTRAINTERFACE/resources/ultrainterface -ErrorAction 'SilentlyContinue'
 
-	Write-Output "- Making Directories"
+	Write-Status " - Making Directories"
 
 	New-Item ./ULTRAINTERFACE/Package/contentFiles/any/any/resources/ -ItemType Directory | Out-Null
 	New-Item ./ULTRAINTERFACE/Package/contentFiles/any/any/src/ -ItemType Directory | Out-Null
@@ -51,7 +63,7 @@ function Setup-Package-Dirs {
 
 function Wait-For-Asset-Bundles {
 	if (Test-Path "./UnityProject/build.lock") {
-		Write-Output "`n-- Waiting for Asset Bundles to build --`n"
+		Write-Status "`n -- Waiting for Asset Bundles to build --`n"
 
 		while (Test-Path "./UnityProject/build.lock") { Start-Sleep -Milliseconds 100 }
 	}
@@ -66,7 +78,7 @@ function Check-For-Asset-Bundles {
 }
 
 function Copy-Package-Files {
-	Write-Output "- Copying Package Files"
+	Write-Status " - Copying Package Files"
 
 	Copy-Item ./UnityProject/Assets/StreamingAssets/ultrainterface ./ULTRAINTERFACE/resources/
 	Copy-Item ./ULTRAINTERFACE/resources/* ./ULTRAINTERFACE/Package/contentFiles/any/any/resources/ -Recurse
@@ -74,13 +86,15 @@ function Copy-Package-Files {
 }
 
 function Create-Package {
-	Write-Output "- Creating NuGet Package: `n"
+	Write-Status " - Creating NuGet Package: `n"
 
 	. $NuGetPath pack ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nuspec -OutputDirectory ./ULTRAINTERFACE/Package/ -OutputFileNamesWithoutVersion
 	if ($LASTEXITCODE -ne 0) {
 		Write-Error "`nFailed to pack the NuGet Package!"
 		Exit-Fail
 	}
+
+	Write-Output ""
 }
 
 function Build-Package {
@@ -94,111 +108,122 @@ function Build-Package {
 }
 
 function Install-Package {
-	Write-Output "- Installing NuGet Package: `n"
+	Write-Status " - Installing NuGet Package: `n"
 
 	. $NuGetPath add ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source $LocalNuGetSource
 	if ($LASTEXITCODE -ne 0) {
 		Write-Error "`nFailed to install the NuGet Package!"
 		Exit-Fail
 	}
+
+	Write-Output ""
 }
 
 function Clean-Up-Build {
-	Write-Output "`n- Cleaning up"
+	Write-Status " - Cleaning up"
 
 	Remove-Item -Recurse -Force ./ULTRAINTERFACE/Package/contentFiles/ -ErrorAction 'SilentlyContinue'
 	Remove-Item -Force ./ULTRAINTERFACE/resources/ultrainterface -ErrorAction 'SilentlyContinue'
 }
 
-Test-Nuget
+function Restore-Example-Mod {
+	Write-Status " - Restoring Example Mod: `n"
+	dotnet restore .\ExampleUI\ExampleUI.csproj -r win-x64 -s "https://nuget.bepinex.dev/v3/index.json" -s "C:\dev\ULTRAINTERFACE\LocalNuGetSource"
 
-$NuGetPackageCache = ((.$NuGetPath locals global-packages -list) -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
-
-if (!$OnlyBuildExampleMod) {
-	Build-Package
-
-	if (!$DontInstallLocally) {
-		Install-Package
+	if ($LASTEXITCODE -ne 0) {
+		Write-Error "`nFailed to restore dependencies for the Example Mod!"
+		Exit-Fail
 	}
 
-	Clean-Up-Build
+	Write-Output ""
+}
 
-	if (!$DontInstallLocally -and !$OnlyBuildPackage) {
-		Write-Output "- Adding local source to NuGet.Config"
+function Build-Example-Mod {
+	Write-Status " - Building Example Mod: `n"
 
-		[xml] $doc = Get-Content("./ExampleUI/NuGet.Config")
+	if ($Release) {
+		dotnet publish ./ExampleUI/ExampleUI.csproj --no-restore -c Release -r win-x64
+	} else {
+		dotnet build ./ExampleUI/ExampleUI.csproj --no-restore -r win-x64
+	}
+	
+	if ($LASTEXITCODE -ne 0) {
+		Write-Error "`nFailed to build the Example Mod!"
+		Exit-Fail
+	}
 
-		$newNode = $doc.CreateElement("add")
+	Write-Output ""
+}
 
-		$keyAttribute = $doc.CreateAttribute("key")
-		$keyAttribute.Value = "ULTRAINTERFACE"
+function Link-Source-To-NuGet-Install {
+	Write-Status " - Linking NuGet Files to Source Files"
 
-		$valueAttribute = $doc.CreateAttribute("value")
-		$valueAttribute.Value = (Resolve-Path $LocalNuGetSource)
+	Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src/ -ErrorAction 'SilentlyContinue'
+	New-Item -ItemType Junction -Path $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src -Target (Resolve-Path ./ULTRAINTERFACE/src/) -ErrorAction 'Stop' | Out-Null
+}
 
-		$newNode.Attributes.Append($keyAttribute) | Out-Null
-		$newNode.Attributes.Append($valueAttribute) | Out-Null
+function Install-Example-Mod {
+	New-Item $UltrakillInstall/BepInEx/scripts -ItemType Directory -ErrorAction 'SilentlyContinue' | Out-Null
 
-		$packageSources = $doc.configuration.packageSources
-		$packageSources.AppendChild($newNode) | Out-Null
-
-		$doc.Save((Resolve-Path "./ExampleUI/NuGet.Config")) | Out-Null
+	Write-Status " - Copying Example Mod to Scripts Folder"
+	if ($Release) {
+		Copy-Item ./ExampleUI/bin/Release/net471/win-x64/publish/ExampleUI.dll $UltrakillInstall/BepInEx/scripts
+	} else {
+		Copy-Item ./ExampleUI/bin/Debug/net471/win-x64/ExampleUI.dll $UltrakillInstall/BepInEx/scripts
 	}
 }
 
-if (!$OnlyBuildPackage) {
-	Write-Output "- Building Example Mod: `n"
+function Main {
+	$OriginalColor = $Host.UI.RawUI.ForegroundColor
+	. ./config.ps1
 
-	if ($Release) {
-		dotnet publish ./ExampleUI/ExampleUI.csproj -c Release -r win-x64
-	} else {
-		dotnet build ./ExampleUI/ExampleUI.csproj -r win-x64
+	if ($Help) {
+		Write-Help
+		exit 0
 	}
 
-	$buildExitCode = $LASTEXITCODE
+	Test-Nuget
 
-	if (!$DontInstallLocally) {
-		Write-Output "`n- Reverting changes to NuGet.Config"
+	$NuGetPackageCache = ((.$NuGetPath locals global-packages -list) -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
 
-		$packageSources.RemoveChild($newNode) | Out-Null
-		$doc.Save((Resolve-Path "./ExampleUI/NuGet.Config")) | Out-Null
+	if (!$DontBuildUltrainterface) {
+		Build-Package
 
-		Write-Output "- Linking NuGet Files to Source Files"
+		if (!$DontInstall) {
+			Install-Package
+		}
 
-		Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src/ -ErrorAction 'SilentlyContinue'
-		New-Item -ItemType Junction -Path $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src -Target (Resolve-Path ./ULTRAINTERFACE/src/) -ErrorAction 'Stop' | Out-Null
+		Clean-Up-Build
 	}
 
-	if (!(Test-Path $UltrakillInstall)) {
-		$Host.UI.RawUI.ForegroundColor = "Red"
-		Write-Output "`n- Could not find ULTRAKILL install at `"$UltrakillInstall`"!"
-		Write-Output "- Cannot copy the ExampleUI mod to the scripts folder"
-		Write-Output "- Please specify the correct path in the `"config.ps1`" script to allow for auto-install of the mod"
-		$Host.UI.RawUI.ForegroundColor = $OriginalColor
-	} else {
-		New-Item $UltrakillInstall/BepInEx/scripts -ItemType Directory -ErrorAction 'SilentlyContinue' | Out-Null
+	if (!$DontBuildExampleMod) {
+		Restore-Example-Mod
 
-		Write-Output "- Copying Example Mod to Scripts Folder"
-		if ($Release) {
-			Copy-Item ./ExampleUI/bin/Release/net471/win-x64/publish/ExampleUI.dll $UltrakillInstall/BepInEx/scripts
-		} else {
-			Copy-Item ./ExampleUI/bin/Debug/net471/win-x64/ExampleUI.dll $UltrakillInstall/BepInEx/scripts
+		if (!$DontInstall) {
+			Link-Source-To-NuGet-Install
+		}
+		
+		Build-Example-Mod
+
+		if (!$DontInstall) {
+			if (!(Test-Path $UltrakillInstall)) {
+				Write-Error " - Could not find ULTRAKILL install at `"$UltrakillInstall`"!"
+				Write-Error " - Cannot copy the ExampleUI mod to the scripts folder"
+				Write-Error " - Please specify the correct path in the `"config.ps1`" script to allow for auto-install of the mod"
+			} else {
+				Install-Example-Mod
+			}
+		}
+
+	} else {
+		if (!$DontInstall) {
+			Link-Source-To-NuGet-Install
 		}
 	}
 
-	if ($buildExitCode -ne 0) {
-		$Host.UI.RawUI.ForegroundColor = "Red"
-		Write-Output "`n-- Build FAILED! --"
-		$Host.UI.RawUI.ForegroundColor = $OriginalColor
-	
-		exit 1
-	} else {
-		$Host.UI.RawUI.ForegroundColor = "Green"
-		Write-Output "`n-- Build Complete! --"
-		$Host.UI.RawUI.ForegroundColor = $OriginalColor
-	}
-} else {
 	$Host.UI.RawUI.ForegroundColor = "Green"
-	Write-Output "`n-- Build Complete! --"
+	Write-Output "`n -- Build Complete! --"
 	$Host.UI.RawUI.ForegroundColor = $OriginalColor
 }
+
+Main
