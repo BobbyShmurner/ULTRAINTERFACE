@@ -122,16 +122,12 @@ jobs:
 
     - name: Build Package
       run: |
-        ./build.ps1 -Release -DontInstall
+        ./build.ps1 -Release
 
     - name: Upload To NuGet.org
       run: |
         nuget setApiKey ${{ secrets.NUGET_API_KEY }}
         nuget push ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source https://api.nuget.org/v3/index.json
-
-    - name: Build Mod
-      run: |
-        ./build.ps1 -Release -DontInstall
         
     - name: Upload NuGet Package
       uses: actions/upload-release-asset@v1
