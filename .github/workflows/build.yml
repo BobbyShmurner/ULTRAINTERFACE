@@ -31,7 +31,8 @@ jobs:
     - name: Upload NuGet Package
       uses: actions/upload-artifact@v2
       with:
-        name: ULTRAINTERFACE.nupkg        path: ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg
+        name: ULTRAINTERFACE.nupkg
+        path: ./ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg
         if-no-files-found: error
 
         
