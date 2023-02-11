@@ -128,6 +128,8 @@ function Clean-Up-Build {
 
 function Restore-Example-Mod {
 	Write-Status " - Restoring Example Mod: `n"
+
+	$LocalNuGetSource = (Resolve-Path $LocalNuGetSource).Path
 	dotnet restore .\ExampleUI\ExampleUI.csproj -r win-x64 -s "https://nuget.bepinex.dev/v3/index.json" -s "$LocalNuGetSource"
 
 	if ($LASTEXITCODE -ne 0) {
@@ -175,10 +177,7 @@ function Install-Example-Mod {
 
 function Main {
 	$OriginalColor = $Host.UI.RawUI.ForegroundColor
-
 	. ./config.ps1
-	$LocalNuGetSource = (Resolve-Path $LocalNuGetSource).Path
-	$UltrakillInstall = (Resolve-Path $UltrakillInstall).Path
 
 	if ($Help) {
 		Write-Help
