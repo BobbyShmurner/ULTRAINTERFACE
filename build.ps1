@@ -130,7 +130,7 @@ function Restore-Example-Mod {
 	Write-Status " - Restoring Example Mod: `n"
 
 	$LocalNuGetSource = (Resolve-Path $LocalNuGetSource).Path
-	dotnet restore .\ExampleUI\ExampleUI.csproj -r win-x64 -s "https://nuget.bepinex.dev/v3/index.json" -s "$LocalNuGetSource"
+	dotnet restore .\ExampleUI\ExampleUI.csproj -r win-x64 -s "https://nuget.bepinex.dev/v3/index.json" -s "https://api.nuget.org/v3/index.json" -s "$LocalNuGetSource"
 
 	if ($LASTEXITCODE -ne 0) {
 		Write-Error "`nFailed to restore dependencies for the Example Mod!"
