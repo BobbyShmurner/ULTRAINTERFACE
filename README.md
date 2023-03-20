@@ -29,12 +29,12 @@ Because ULTRAINTERFACE consists of both the actual library and an Asset Bundle, 
 If you don't wish to add any new UI Elements, building just the library is quite straightforward:
 - First, clone the repo
 - Setup any vars needed in the `config.ps1` script located in the repo's root
-- Run `build.ps1`
+- Run `./Scripts/build.ps1`
 
 ```
 git clone https://github.com/BobbyShmurner/ULTRAINTERFACE/
 cd ULTRAINTERFACE
-./build.ps1
+./Scripts/build.ps1
 ```
 
 If you have correctly configured `config.ps1`, ULTRAINTERFACE should have been built and installed automatically. Hooray! :D
