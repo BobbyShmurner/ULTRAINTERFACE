@@ -1,8 +1,8 @@
 bin/
 obj/
 
-config.ps1
-ULTRAINTERFACE/resources/ultrainterface
+/config.ps1
+/ULTRAINTERFACE/resources/ultrainterface
 
 LocalNuGetSource/
 **/contentFiles/*
