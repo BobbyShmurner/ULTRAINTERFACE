@@ -23,12 +23,12 @@ Because ULTRAINTERFACE consists of both the actual library and an Asset Bundle, 
 - [NuGet](https://www.nuget.org/downloads)
 - [DotNET SDK >= 4.7](https://dotnet.microsoft.com/en-us/download) (Version 6 is recommended, as it is required for building the Asset Bundle)
 
-**NOTE:** Specifically `nuget.exe` needs to be downloaded, and its path needs to be specified in the `config.ps1` script. The built-in NuGet manager that comes with the DotNET SDK will not suffice.
+**NOTE:** Specifically `nuget.exe` needs to be downloaded, and its path needs to be specified in the `config.cfg` script. The built-in NuGet manager that comes with the DotNET SDK will not suffice.
 
 ### Building:
 If you don't wish to add any new UI Elements, building just the library is quite straightforward:
 - First, clone the repo
-- Setup any vars needed in the `config.ps1` script located in the repo's root
+- Setup any vars needed in the `config.cfg` script located in the repo's root
 - Run `./Scripts/build.ps1`
 
 ```
@@ -37,7 +37,7 @@ cd ULTRAINTERFACE
 ./Scripts/build.ps1
 ```
 
-If you have correctly configured `config.ps1`, ULTRAINTERFACE should have been built and installed automatically. Hooray! :D
+If you have correctly configured `config.cfg`, ULTRAINTERFACE should have been built and installed automatically. Hooray! :D
 
 To build the example mod, run `build.ps1 -BuildExampleMod` to build and automatically install the Example Mod
 
