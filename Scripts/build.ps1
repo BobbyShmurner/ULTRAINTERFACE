@@ -23,18 +23,18 @@ function Write-Help {
 function Setup-Package-Dirs {
 	Write-Status " - Removing Files"
 
-	Remove-Item -Recurse -Force $LocalNuGetSource/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
-	Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/ -ErrorAction 'SilentlyContinue'
-	Remove-Item -Recurse -Force $PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/ -ErrorAction 'SilentlyContinue'
+	Remove-Item -Recurse -Force "$($Config.LocalNuGetSource)/ultrainterface/0.0.1/" -ErrorAction 'SilentlyContinue'
+	Remove-Item -Recurse -Force "$NuGetPackageCache/ultrainterface/0.0.1/" -ErrorAction 'SilentlyContinue'
+	Remove-Item -Recurse -Force "$PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/" -ErrorAction 'SilentlyContinue'
 
-	Remove-Item -Force $PSScriptRoot/../ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -ErrorAction 'SilentlyContinue'
-	Remove-Item -Force $PSScriptRoot/../ULTRAINTERFACE/resources/ultrainterface -ErrorAction 'SilentlyContinue'
+	Remove-Item -Force "$PSScriptRoot/../ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg" -ErrorAction 'SilentlyContinue'
+	Remove-Item -Force "$PSScriptRoot/../ULTRAINTERFACE/resources/ultrainterface" -ErrorAction 'SilentlyContinue'
 
 	Write-Status " - Making Directories"
 
-	New-Item $PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/any/any/resources/ -ItemType Directory | Out-Null
-	New-Item $PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/any/any/src/ -ItemType Directory | Out-Null
-	New-Item $PSScriptRoot/../ULTRAINTERFACE/resources/ -ItemType Directory -ErrorAction 'SilentlyContinue' | Out-Null
+	New-Item "$PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/any/any/resources/" -ItemType Directory | Out-Null
+	New-Item "$PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/any/any/src/" -ItemType Directory | Out-Null
+	New-Item "$PSScriptRoot/../ULTRAINTERFACE/resources/" -ItemType Directory -ErrorAction 'SilentlyContinue' | Out-Null
 }
 
 function Wait-For-Asset-Bundles {
@@ -56,15 +56,15 @@ function Check-For-Asset-Bundles {
 function Copy-Package-Files {
 	Write-Status " - Copying Package Files"
 
-	Copy-Item $PSScriptRoot/../UnityProject/Assets/StreamingAssets/ultrainterface $PSScriptRoot/../ULTRAINTERFACE/resources/
-	Copy-Item $PSScriptRoot/../ULTRAINTERFACE/resources/* $PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/any/any/resources/ -Recurse
-	Copy-Item $PSScriptRoot/../ULTRAINTERFACE/src/* $PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/any/any/src/ -Recurse
+	Copy-Item "$PSScriptRoot/../UnityProject/Assets/StreamingAssets/ultrainterface" "$PSScriptRoot/../ULTRAINTERFACE/resources/"
+	Copy-Item "$PSScriptRoot/../ULTRAINTERFACE/resources/*" "$PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/any/any/resources/" -Recurse
+	Copy-Item "$PSScriptRoot/../ULTRAINTERFACE/src/*" "$PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/any/any/src/" -Recurse
 }
 
 function Create-Package {
 	Write-Status " - Creating NuGet Package: `n"
 
-	. $NuGetPath pack $PSScriptRoot/../ULTRAINTERFACE/Package/ULTRAINTERFACE.nuspec -OutputDirectory $PSScriptRoot/../ULTRAINTERFACE/Package/ -OutputFileNamesWithoutVersion
+	. "$($Config.NuGetPath)" pack "$PSScriptRoot/../ULTRAINTERFACE/Package/ULTRAINTERFACE.nuspec" -OutputDirectory "$PSScriptRoot/../ULTRAINTERFACE/Package/" -OutputFileNamesWithoutVersion
 	if ($LASTEXITCODE -ne 0) {
 		Write-Error "`nFailed to pack the NuGet Package!"
 		Exit-Fail
@@ -86,7 +86,7 @@ function Build-Package {
 function Install-Package {
 	Write-Status " - Installing NuGet Package: `n"
 
-	. $NuGetPath add $PSScriptRoot/../ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg -Source $LocalNuGetSource
+	. "$($Config.NuGetPath)" add "$PSScriptRoot/../ULTRAINTERFACE/Package/ULTRAINTERFACE.nupkg" -Source "$($Config.LocalNuGetSource)"
 	if ($LASTEXITCODE -ne 0) {
 		Write-Error "`nFailed to install the NuGet Package!"
 		Exit-Fail
@@ -98,15 +98,15 @@ function Install-Package {
 function Clean-Up-Build {
 	Write-Status " - Cleaning up"
 
-	Remove-Item -Recurse -Force $PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/ -ErrorAction 'SilentlyContinue'
-	Remove-Item -Force $PSScriptRoot/../ULTRAINTERFACE/resources/ultrainterface -ErrorAction 'SilentlyContinue'
+	Remove-Item -Recurse -Force "$PSScriptRoot/../ULTRAINTERFACE/Package/contentFiles/" -ErrorAction 'SilentlyContinue'
+	Remove-Item -Force "$PSScriptRoot/../ULTRAINTERFACE/resources/ultrainterface" -ErrorAction 'SilentlyContinue'
 }
 
 function Restore-Example-Mod {
 	Write-Status " - Restoring Example Mod: `n"
 
-	$LocalNuGetSource = (Resolve-Path $LocalNuGetSource).Path
-	dotnet restore $PSScriptRoot/../ExampleUI/ExampleUI.csproj -r win-x64 -s "https://nuget.bepinex.dev/v3/index.json" -s "https://api.nuget.org/v3/index.json" -s "$LocalNuGetSource"
+	$ResolvedLocalNuGetSource = (Resolve-Path "$($Config.LocalNuGetSource)").Path
+	dotnet restore "$PSScriptRoot/../ExampleUI/ExampleUI.csproj" -r win-x64 -s "https://nuget.bepinex.dev/v3/index.json" -s "https://api.nuget.org/v3/index.json" -s "$ResolvedLocalNuGetSource"
 
 	if ($LASTEXITCODE -ne 0) {
 		Write-Error "`nFailed to restore dependencies for the Example Mod!"
@@ -120,9 +120,9 @@ function Build-Example-Mod {
 	Write-Status " - Building Example Mod: `n"
 
 	if ($Release) {
-		dotnet publish $PSScriptRoot/../ExampleUI/ExampleUI.csproj --no-restore -c Release -r win-x64
+		dotnet publish "$PSScriptRoot/../ExampleUI/ExampleUI.csproj" --no-restore -c Release -r win-x64
 	} else {
-		dotnet build $PSScriptRoot/../ExampleUI/ExampleUI.csproj --no-restore -r win-x64
+		dotnet build "$PSScriptRoot/../ExampleUI/ExampleUI.csproj" --no-restore -r win-x64
 	}
 	
 	if ($LASTEXITCODE -ne 0) {
@@ -137,24 +137,24 @@ function Link-Source-To-NuGet-Install {
 	if ($DontBuildLibrary) { return }
 	Write-Status " - Linking NuGet Files to Source Files"
 
-	Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src/ -ErrorAction 'SilentlyContinue'
-	New-Item -ItemType Junction -Path $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src -Target (Resolve-Path $PSScriptRoot/../ULTRAINTERFACE/src/) -ErrorAction 'Stop' | Out-Null
+	Remove-Item -Recurse -Force "$NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src/" -ErrorAction 'SilentlyContinue'
+	New-Item -ItemType Junction -Path "$NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src" -Target (Resolve-Path "$PSScriptRoot/../ULTRAINTERFACE/src/") -ErrorAction 'Stop' | Out-Null
 }
 
 function Install-Example-Mod {
 	Write-Status " - Installing Example Mod"
-	New-Item $UltrakillInstall/BepInEx/scripts -ItemType Directory -ErrorAction 'SilentlyContinue' | Out-Null
+	New-Item "$($Config.UltrakillInstall)/BepInEx/scripts" -ItemType Directory -ErrorAction 'SilentlyContinue' | Out-Null
 
 	if ($DontUseScriptEngine) {
-		$InstallPath = "$UltrakillInstall/BepInEx/plugins"
+		$InstallPath = "$($Config.UltrakillInstall)/BepInEx/plugins"
 	} else {
-		$InstallPath = "$UltrakillInstall/BepInEx/scripts"
+		$InstallPath = "$($Config.UltrakillInstall)/BepInEx/scripts"
 	}
 
 	if ($Release) {
-		Copy-Item $PSScriptRoot/../ExampleUI/bin/Release/net471/win-x64/publish/ExampleUI.dll $InstallPath
+		Copy-Item "$PSScriptRoot/../ExampleUI/bin/Release/net471/win-x64/publish/ExampleUI.dll" "$InstallPath"
 	} else {
-		Copy-Item $PSScriptRoot/../ExampleUI/bin/Debug/net471/win-x64/ExampleUI.dll $InstallPath
+		Copy-Item "$PSScriptRoot/../ExampleUI/bin/Debug/net471/win-x64/ExampleUI.dll" "$InstallPath"
 	}
 }
 
@@ -164,9 +164,9 @@ function Main {
 		exit 0
 	}
 
-	Test-Program $NuGetPath NuGet
+	Test-Program "$($Config.NuGetPath)" NuGet
 
-	$NuGetPackageCache = ((.$NuGetPath locals global-packages -list) -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
+	$NuGetPackageCache = ((. "$($Config.NuGetPath)" locals global-packages -list) -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
 
 	if (!$DontBuildLibrary) {
 		Build-Package
@@ -187,8 +187,8 @@ function Main {
 		Build-Example-Mod
 
 		if (!$DontInstallExampleMod) {
-			if (!(Test-Path $UltrakillInstall)) {
-				Write-Error " - Could not find ULTRAKILL install at `"$UltrakillInstall`"!"
+			if (!(Test-Path $($Config.UltrakillInstall))) {
+				Write-Error " - Could not find ULTRAKILL install at `"$($Config.UltrakillInstall)`"!"
 				Write-Error " - Cannot copy the ExampleUI mod to the scripts folder"
 				Write-Error " - Please specify the correct path in the `"config.ps1`" script to allow for auto-install of the mod"
 			} else {
