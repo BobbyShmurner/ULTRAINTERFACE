@@ -42,7 +42,6 @@ function Exit-Fail {
 }
 
 function Test-Nuget {
-	Write-Status " - Testing NuGet Install"
 	$NuGetTest = Get-Command "$NuGetPath" -ErrorAction 'SilentlyContinue'
 
 	if ($NuGetTest.Length -eq 0) {

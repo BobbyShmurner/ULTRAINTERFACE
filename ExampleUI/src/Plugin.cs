@@ -8,9 +8,6 @@ using UnityEngine;
 
 using ULTRAINTERFACE;
 
-using System.IO;
-using System.Reflection;
-
 namespace ExampleUI
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
