@@ -26,7 +26,7 @@ jobs:
 
     - name: Build
       run: |
-        ./build.ps1 -Release
+        ./build.ps1 -Release -BuildExampleMod
 
     - name: Upload NuGet Package
       uses: actions/upload-artifact@v2

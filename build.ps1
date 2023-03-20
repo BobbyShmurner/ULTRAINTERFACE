@@ -1,16 +1,23 @@
 param (
 	[Switch] $Help,
 	[Switch] $Release,
-	[Switch] $DontInstall,
-
-	[Switch] $DontBuildExampleMod,
-	[Switch] $DontBuildUltrainterface
+	[Switch] $BuildExampleMod,
+	
+	[Switch] $DontBuildLibrary,
+	[Switch] $DontInstallLibrary,
+	[Switch] $DontInstallExampleMod,
+	[Switch] $DontUseScriptEngine
 )
 
 function Write-Help {
-	Write-Output " -Release`t`tBuilds in release mode"
-	Write-Output " -DontInstall`t`tWon't install the NuGet Package or the Example mod"
-	Write-Output " -Help`t`t`tShows this message"
+	Write-Output " -Release`t`t`tBuilds in Release Mode"
+	Write-Output " -BuildExampleMod`t`tBuilds the Example Mod"
+	Write-Output " -DontInstallLibrary`t`tWon't install the NuGet Package"
+	Write-Output " -DontInstallExampleMod`t`tWon't install the Example Mod"
+	Write-Output " -DontBuildLibrary`t`tWon't build the ULTRAINTERFACE Library or its NuGet Package"
+	Write-Output " -DontUseScriptEngine`t`tInstall the Example Mod to `"BepInEx\plugins`" instead of `"BepInEx\scripts`""
+	Write-Output ""
+	Write-Output " -Help`t`t`t`tShows this message"
 }
 
 function Write-Status {
@@ -158,6 +165,7 @@ function Build-Example-Mod {
 }
 
 function Link-Source-To-NuGet-Install {
+	if ($DontBuildLibrary) { return }
 	Write-Status " - Linking NuGet Files to Source Files"
 
 	Remove-Item -Recurse -Force $NuGetPackageCache/ultrainterface/0.0.1/contentFiles/any/any/src/ -ErrorAction 'SilentlyContinue'
@@ -165,13 +173,19 @@ function Link-Source-To-NuGet-Install {
 }
 
 function Install-Example-Mod {
+	Write-Status " - Installing Example Mod"
 	New-Item $UltrakillInstall/BepInEx/scripts -ItemType Directory -ErrorAction 'SilentlyContinue' | Out-Null
 
-	Write-Status " - Copying Example Mod to Scripts Folder"
-	if ($Release) {
-		Copy-Item ./ExampleUI/bin/Release/net471/win-x64/publish/ExampleUI.dll $UltrakillInstall/BepInEx/scripts
+	if ($DontUseScriptEngine) {
+		$InstallPath = "$UltrakillInstall/BepInEx/plugins"
 	} else {
-		Copy-Item ./ExampleUI/bin/Debug/net471/win-x64/ExampleUI.dll $UltrakillInstall/BepInEx/scripts
+		$InstallPath = "$UltrakillInstall/BepInEx/scripts"
+	}
+
+	if ($Release) {
+		Copy-Item ./ExampleUI/bin/Release/net471/win-x64/publish/ExampleUI.dll $InstallPath
+	} else {
+		Copy-Item ./ExampleUI/bin/Debug/net471/win-x64/ExampleUI.dll $InstallPath
 	}
 }
 
@@ -188,26 +202,25 @@ function Main {
 
 	$NuGetPackageCache = ((.$NuGetPath locals global-packages -list) -replace ".*global-packages: ").TrimEnd('\').TrimEnd('/')
 
-	if (!$DontBuildUltrainterface) {
+	if (!$DontBuildLibrary) {
 		Build-Package
 
-		if (!$DontInstall) {
+		if (!$DontInstallLibrary) {
 			Install-Package
 		}
 
 		Clean-Up-Build
 	}
 
-	if (!$DontBuildExampleMod) {
+	if ($BuildExampleMod) {
 		Restore-Example-Mod
 
-		if (!$DontInstall) {
-			Link-Source-To-NuGet-Install
-		}
+		# Linking has to happen AFTER restoring, otherwise there are permission errors when restoring
+		Link-Source-To-NuGet-Install
 		
 		Build-Example-Mod
 
-		if (!$DontInstall) {
+		if (!$DontInstallExampleMod) {
 			if (!(Test-Path $UltrakillInstall)) {
 				Write-Error " - Could not find ULTRAKILL install at `"$UltrakillInstall`"!"
 				Write-Error " - Cannot copy the ExampleUI mod to the scripts folder"
@@ -216,11 +229,8 @@ function Main {
 				Install-Example-Mod
 			}
 		}
-
 	} else {
-		if (!$DontInstall) {
-			Link-Source-To-NuGet-Install
-		}
+		Link-Source-To-NuGet-Install
 	}
 
 	$Host.UI.RawUI.ForegroundColor = "Green"

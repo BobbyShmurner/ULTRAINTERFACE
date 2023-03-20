@@ -122,7 +122,7 @@ jobs:
 
     - name: Build Package
       run: |
-        ./build.ps1 -Release
+        ./build.ps1 -Release -BuildExampleMod
 
     - name: Upload To NuGet.org
       run: |
